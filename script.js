@@ -5,50 +5,66 @@ document.addEventListener("DOMContentLoaded", function () {
     // 3. replace this mock data with your excel data
     
     // mock data for now
-    const auditors = [
-        {
-            id: 1,
-            name: "Makis Galanos",
-            registrationNumber: "FSA/0255",
-            company: "Intertek SAI Global",
-            phone: "0479 118 586",
-            email: "makis.galanos@optusnet.com.au",
-            certifications: {
-                standard: "NA",
-                cookChill: "NA",
-                heatTreatment: "NA",
-            },
-            regions:
-                "Cairns & Hinterland, Cape & Torres, Central Queensland, Darling Downs, Gold Coast, Mackay, Metro North, Metro South, North West, Sunshine Coast, Townsville.",
-        },
-        {
-            id: 2,
-            name: "Sarah Thompson",
-            registrationNumber: "FSA/0312",
-            company: "Food Safety Queensland",
-            phone: "0432 555 123",
-            email: "s.thompson@foodsafetyqld.com.au",
-            certifications: {
-                scopes: "High Risk, Cook Chill, Heat Treatment",
-            },
-            regions: "Brisbane, Gold Coast, Sunshine Coast, Metro North",
-        },
-        {
-            id: 3,
-            name: "James Chen",
-            registrationNumber: "FSA/0289",
-            company: "Australian Food Safety Consultants",
-            phone: "0445 789 012",
-            email: "james.chen@afsc.com.au",
-            certifications: {
-                standard: "Yes",
-                cookChill: "No",
-                heatTreatment: "Yes",
-            },
-            regions: "Metro South, Darling Downs, Townsville, Mackay",
-        },
-    ];
+    // const auditors = [
+    //     {
+    //         id: 1,
+    //         name: "Makis Galanos",
+    //         registrationNumber: "FSA/0255",
+    //         company: "Intertek SAI Global",
+    //         phone: "0479 118 586",
+    //         email: "makis.galanos@optusnet.com.au",
+    //         certifications: {
+    //             standard: "NA",
+    //             cookChill: "NA",
+    //             heatTreatment: "NA",
+    //         },
+    //         regions:
+    //             "Cairns & Hinterland, Cape & Torres, Central Queensland, Darling Downs, Gold Coast, Mackay, Metro North, Metro South, North West, Sunshine Coast, Townsville.",
+    //     },
+    //     {
+    //         id: 2,
+    //         name: "Sarah Thompson",
+    //         registrationNumber: "FSA/0312",
+    //         company: "Food Safety Queensland",
+    //         phone: "0432 555 123",
+    //         email: "s.thompson@foodsafetyqld.com.au",
+    //         certifications: {
+    //             scopes: "High Risk, Cook Chill, Heat Treatment",
+    //         },
+    //         regions: "Brisbane, Gold Coast, Sunshine Coast, Metro North",
+    //     },
+    //     {
+    //         id: 3,
+    //         name: "James Chen",
+    //         registrationNumber: "FSA/0289",
+    //         company: "Australian Food Safety Consultants",
+    //         phone: "0445 789 012",
+    //         email: "james.chen@afsc.com.au",
+    //         certifications: {
+    //             standard: "Yes",
+    //             cookChill: "No",
+    //             heatTreatment: "Yes",
+    //         },
+    //         regions: "Metro South, Darling Downs, Townsville, Mackay",
+    //     },
+    // ];
 
+    // Parse data from csv file
+    function parseAuditorCSV(data) {
+        const [headerLine, ...lines] = data.trim().split("\n");
+        const headers = headerLine.split(",");
+
+        return lines.map(line => {
+            const values = line.split(",");
+            const obj = {};
+            headers.forEach((header, i) => {
+                obj[header.trim()] = values[i]?.trim();
+            });
+            return obj;
+        });
+    }
+
+    
     // function to render auditor cards
     function renderAuditors(auditorList) {
         const resultsContainer = document.getElementById("results-container");
@@ -92,7 +108,10 @@ document.addEventListener("DOMContentLoaded", function () {
             contactInfo.className = "info-value";
 
             const phone = document.createElement("p");
-            phone.textContent = `Phone: ${auditor.phone}`;
+            // phone.textContent = `Phone: ${auditor.phone}`;            
+            // phone.textContent = `Phone: ${
+            //     Array.isArray(auditor.phone) ? auditor.phone.join(", ") : auditor.phone
+            // }`;
 
             const email = document.createElement("p");
             email.textContent = `Email: ${auditor.email}`;
@@ -147,6 +166,17 @@ document.addEventListener("DOMContentLoaded", function () {
             const regionDetails = document.createElement("p");
             regionDetails.className = "info-value";
             regionDetails.textContent = auditor.regions;
+            // if (Array.isArray(auditor.regions)) {
+            //     const list = document.createElement("ul");
+            //     auditor.regions.forEach(region => {
+            //         const li = document.createElement("li");
+            //         li.textContent = region;
+            //         list.appendChild(li);
+            //     });
+            //     regionDetails.appendChild(list);
+            // } else {
+            //     regionDetails.textContent = auditor.regions || "N/A";
+            // }
 
             regionInfo.appendChild(regionTitle);
             regionInfo.appendChild(regionDetails);
@@ -168,8 +198,38 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // render the cards
-    renderAuditors(auditors);
+    // // Fetch and display auditors
+    fetch("Approved_Auditors.csv")
+        .then(res => res.text())
+        .then(data => {
+            const parsed = parseAuditorCSV(data);
+
+            const auditors = parsed
+                .filter(row => row["Organisation"])
+                .map((row, index) => ({
+                    id: index + 1,
+                    name: row["Auditor Name"],
+                    registrationNumber: row["Approval No."],
+                    company: row["Organisation"],
+                    phone: row["Phone No."],
+                    // phone: row["Phone No."]?.split(",").map(p => p.trim()),
+                    email: row["Email"],
+                    certifications: {
+                        standard: row["Standard (high risk)"],
+                        cookChill: row["Cook Chill"],
+                        heatTreatment: row["Heat Treatment"]
+                    },
+                    regions: row["Local government areas of service"]
+                        // ? row["Local government areas of service"].split(",").map(r => r.trim())
+                        // : []
+            }));
+
+            renderAuditors(auditors); 
+        })
+        .catch(err => {
+            console.error("Error loading CSV:", err);
+        });
+
 
     // todo: add these features later
     // 1. search functionality - filter cards by name or registration number
