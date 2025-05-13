@@ -1,0 +1,292 @@
+/* base styles */
+body {
+    font-family: 'Lato', sans-serif;
+    background-color: #f5f6f7;
+    color: #333;
+    line-height: 1.5;
+}
+
+/* skip link */
+.visually-hidden-focusable {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+
+.visually-hidden-focusable:active,
+.visually-hidden-focusable:focus {
+    position: static;
+    width: auto;
+    height: auto;
+    overflow: visible;
+    clip: auto;
+    white-space: normal;
+}
+
+/* account masthead */
+.account-masthead {
+    background-color: #073b4c;
+    padding: 8px 0;
+}
+
+.auth-links {
+    text-align: right;
+}
+
+.auth-links a {
+    color: white;
+    text-decoration: none;
+    margin-left: 20px;
+    font-size: 14px;
+}
+
+.auth-links a:hover {
+    text-decoration: underline;
+}
+
+/* main header */
+.masthead {
+    background-color: #0082b8;
+    color: white;
+    padding: 0;
+    margin-bottom: 20px;
+}
+
+.logo-section {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    padding: 15px 0;
+}
+
+.qld-logo {
+    height: 65px;
+    margin-bottom: 8px;
+}
+
+.logo-section h1 {
+    font-size: 32px;
+    font-weight: 400;
+    letter-spacing: 0.2px;
+    margin: 0;
+}
+
+/* navigation */
+.navbar {
+    padding: 0;
+}
+
+.navbar-light .navbar-nav .nav-link {
+    color: white;
+    padding: 10px 15px;
+    border-radius: 4px;
+}
+
+.navbar-light .navbar-nav .nav-link:hover,
+.navbar-light .navbar-nav .nav-link:focus {
+    background-color: white;
+    color: #006699;
+}
+
+.navbar-light .navbar-toggler {
+    color: white;
+    border-color: rgba(255, 255, 255, 0.5);
+}
+
+.navbar-light .navbar-toggler-icon {
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' width='30' height='30' viewBox='0 0 30 30'%3e%3cpath stroke='rgba(255, 255, 255, 0.9)' stroke-linecap='round' stroke-miterlimit='10' stroke-width='2' d='M4 7h22M4 15h22M4 23h22'/%3e%3c/svg%3e");
+}
+
+/* search bar in header */
+.search-bar {
+    margin-left: 20px;
+}
+
+.search-bar .form-control {
+    background-color: white;
+    border: none;
+}
+
+.search-bar .btn-outline-light {
+    color: #666;
+    background-color: white;
+    border: none;
+}
+
+.search-icon {
+    font-size: 16px;
+}
+
+/* main content */
+.main {
+    padding: 20px 0 40px;
+}
+
+.page-title {
+    font-size: 24px;
+    margin-bottom: 20px;
+    color: #333;
+}
+
+/* search and filter section */
+.search-section {
+    background-color: white;
+    border-radius: 8px;
+    padding: 20px;
+    margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.filters {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (min-width: 768px) {
+    .filters {
+        flex-direction: row;
+        justify-content: space-between;
+    }
+
+    .regions-filter,
+    .certifications {
+        width: 48%;
+    }
+}
+
+.regions-filter h3,
+.certifications h3 {
+    font-size: 18px;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+.checkbox-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.auditor-search {
+    margin-top: 20px;
+}
+
+.search-button {
+    background-color: #0082b8;
+    border-color: #0082b8;
+}
+
+.search-button:hover {
+    background-color: #006699;
+    border-color: #006699;
+}
+
+/* results section */
+.result-card {
+    background-color: white;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    overflow: hidden;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+.result-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    background-color: #f9f9f9;
+    border-bottom: 1px solid #eee;
+}
+
+.result-header h3 {
+    font-size: 20px;
+    font-weight: 500;
+    margin: 0;
+}
+
+.registration-number {
+    background-color: #e8f4f8;
+    color: #0082b8;
+    padding: 4px 10px;
+    border-radius: 4px;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+.result-content {
+    padding: 20px;
+}
+
+.result-grid {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: 20px;
+}
+
+@media (min-width: 768px) {
+    .result-grid {
+        grid-template-columns: repeat(3, 1fr);
+    }
+}
+
+.company-info,
+.certification-info,
+.region-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.info-label {
+    font-weight: 500;
+    color: #333;
+    margin-bottom: 5px;
+}
+
+.info-value {
+    color: #666;
+}
+
+/* footer */
+.site-footer {
+    background-color: #073b4c;
+    color: white;
+    padding: 40px 0;
+    margin-top: 40px;
+}
+
+.site-footer h4 {
+    font-size: 18px;
+    margin-bottom: 15px;
+}
+
+.footer-links {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 15px;
+}
+
+.footer-links a {
+    color: white;
+    text-decoration: none;
+}
+
+.footer-links a:hover {
+    text-decoration: underline;
+}
+
+.site-footer a {
+    color: white;
+}

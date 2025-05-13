@@ -1,0 +1,167 @@
+<!DOCTYPE html>
+<html lang="en_AU" class="js">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Queensland Publications Portal</title>
+
+    <!-- Bootstrap CSS -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Lato:wght@300;400;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+
+<body data-site-root="https://www.publications.qld.gov.au/" data-locale-root="https://www.publications.qld.gov.au/">
+    <!-- Skip to main content link -->
+    <div class="visually-hidden-focusable">
+        <a href="#content">Skip to main content</a>
+    </div>
+
+    <!-- Account masthead -->
+    <div class="account-masthead">
+        <div class="container">
+            <div class="auth-links">
+                <a href="#login">Log In</a>
+                <a href="#register">Register</a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Header with navigation -->
+    <header class="navbar navbar-static-top masthead">
+        <div class="container">
+            <div class="logo-section">
+                <img src="images/qld-logo.png" alt="Queensland Government Logo" class="qld-logo">
+                <h1>Publications portal</h1>
+            </div>
+
+            <nav class="navbar navbar-expand-lg navbar-light navbar-collapse">
+                <button class="navbar-toggler" type="button" data-toggle="collapse"
+                    data-target="#main-navigation-toggle" aria-controls="main-navigation-toggle" aria-expanded="false"
+                    aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+
+                <div class="masthead-navbar collapse navbar-collapse" id="main-navigation-toggle">
+                    <ul class="navbar-nav mr-auto">
+                        <li class="nav-item">
+                            <a class="nav-link" href="#publication">Publication</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#standards">Standards</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#organisations">Organisations</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#gazettes">Gazettes</a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="#contact">Contact</a>
+                        </li>
+                    </ul>
+
+                    <div class="search-bar">
+                        <form class="form-inline my-2 my-lg-0">
+                            <input class="form-control mr-sm-2" type="search" placeholder="Search..."
+                                aria-label="Search">
+                            <button class="btn btn-outline-light my-2 my-sm-0" type="submit">
+                                <span class="search-icon">🔍</span>
+                                <span class="sr-only">Search</span>
+                            </button>
+                        </form>
+                    </div>
+                </div>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main content -->
+    <main role="main" class="main" id="content">
+        <div class="container">
+            <h2 class="page-title">Approved QLD Food Safety Auditor List</h2>
+
+            <!-- Search and filter section -->
+            <div class="search-section">
+                <div class="filters">
+                    <div class="regions-filter">
+                        <h3>Regions</h3>
+                        <select class="form-control" id="region-select">
+                            <option value="" disabled selected>Choose</option>
+                            <option value="brisbane">Brisbane</option>
+                            <option value="goldcoast">Gold Coast</option>
+                            <option value="sunshine">Sunshine Coast</option>
+                            <option value="cairns">Cairns & Hinterland</option>
+                            <option value="mackay">Mackay</option>
+                            <option value="townsville">Townsville</option>
+                        </select>
+                    </div>
+
+                    <div class="certifications">
+                        <h3>Certifications</h3>
+                        <div class="checkbox-group">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="standard">
+                                <label class="form-check-label" for="standard">Standard</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="cookChill">
+                                <label class="form-check-label" for="cookChill">Cook Chill</label>
+                            </div>
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="heatTreatment">
+                                <label class="form-check-label" for="heatTreatment">Heat Treatment</label>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="auditor-search">
+                    <div class="input-group">
+                        <input type="text" class="form-control auditor-search-input"
+                            placeholder="Search by Auditor Name or Registration Number">
+                        <div class="input-group-append">
+                            <button class="btn btn-primary search-button" type="button">Search</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results section -->
+            <div class="results-section" id="results-container">
+                <!-- Results will be populated by JavaScript -->
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="site-footer">
+        <div class="container">
+            <div class="row">
+                <div class="col-md-8">
+                    <h4>Queensland Government</h4>
+                    <p>© The State of Queensland 2023</p>
+                    <ul class="footer-links">
+                        <li><a href="#">Copyright</a></li>
+                        <li><a href="#">Disclaimer</a></li>
+                        <li><a href="#">Privacy</a></li>
+                        <li><a href="#">Right to information</a></li>
+                    </ul>
+                </div>
+                <div class="col-md-4">
+                    <h4>Contact</h4>
+                    <p>For questions about this website, please contact:</p>
+                    <p><a href="mailto:publications@qld.gov.au">publications@qld.gov.au</a></p>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- JavaScript -->
+    <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="script.js"></script>
+</body>
+
+</html>
