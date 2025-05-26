@@ -1,55 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
-    // sully do excel implementation here:
-    // 1. create a function to read the excel file
-    // 2. convert excel data to match the structure below
-    // 3. replace this mock data with your excel data
-    
-    // mock data for now
-    // const auditors = [
-    //     {
-    //         id: 1,
-    //         name: "Makis Galanos",
-    //         registrationNumber: "FSA/0255",
-    //         company: "Intertek SAI Global",
-    //         phone: "0479 118 586",
-    //         email: "makis.galanos@optusnet.com.au",
-    //         certifications: {
-    //             standard: "NA",
-    //             cookChill: "NA",
-    //             heatTreatment: "NA",
-    //         },
-    //         regions:
-    //             "Cairns & Hinterland, Cape & Torres, Central Queensland, Darling Downs, Gold Coast, Mackay, Metro North, Metro South, North West, Sunshine Coast, Townsville.",
-    //     },
-    //     {
-    //         id: 2,
-    //         name: "Sarah Thompson",
-    //         registrationNumber: "FSA/0312",
-    //         company: "Food Safety Queensland",
-    //         phone: "0432 555 123",
-    //         email: "s.thompson@foodsafetyqld.com.au",
-    //         certifications: {
-    //             scopes: "High Risk, Cook Chill, Heat Treatment",
-    //         },
-    //         regions: "Brisbane, Gold Coast, Sunshine Coast, Metro North",
-    //     },
-    //     {
-    //         id: 3,
-    //         name: "James Chen",
-    //         registrationNumber: "FSA/0289",
-    //         company: "Australian Food Safety Consultants",
-    //         phone: "0445 789 012",
-    //         email: "james.chen@afsc.com.au",
-    //         certifications: {
-    //             standard: "Yes",
-    //             cookChill: "No",
-    //             heatTreatment: "Yes",
-    //         },
-    //         regions: "Metro South, Darling Downs, Townsville, Mackay",
-    //     },
-    // ];
+    // wait for page to load
 
-    // Parse data from csv file
+    // convert csv data to usable format
     function parseAuditorCSV(data) {
         const [headerLine, ...lines] = data.trim().split("\n");
         const headers = headerLine.split(",");
@@ -64,57 +16,143 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
+    // store all auditors
+    let allAuditors = [];
     
-    // function to render auditor cards
+    // get list of unique regions
+    function getUniqueRegions(auditors) {
+        const allRegions = new Set(); //set handles dupes
+        auditors.forEach(auditor => {
+            // check if regions exist
+            if (auditor.regions) {
+                const regions = auditor.regions.split(",").map(r => r.trim());
+                regions.forEach(region => {
+                    // skip empty regions
+                    if (region) allRegions.add(region);
+                });
+            }
+        });
+        // sort regions a-z
+        return Array.from(allRegions).sort();
+    }
+
+    // add regions to dropdown
+    function populateRegionDropdown(regions) {
+        const dropdown = document.getElementById("region-select");
+        // add default option
+        dropdown.innerHTML = '<option value="" disabled selected>Choose</option>';
+        regions.forEach(region => {
+            const option = document.createElement("option");
+            option.value = region;
+            option.textContent = region;
+            dropdown.appendChild(option);
+        });
+    }
+
+    // filter auditors based on search and filters
+    function filterAuditors() {
+        const searchTerm = document.querySelector(".auditor-search-input").value.toLowerCase();
+        const selectedRegion = document.getElementById("region-select").value;
+        const standardChecked = document.getElementById("standard").checked;
+        const cookChillChecked = document.getElementById("cookChill").checked;
+        const heatTreatmentChecked = document.getElementById("heatTreatment").checked;
+
+        const filtered = allAuditors.filter(auditor => {
+            // check name and registration matches
+            const matchesSearch = !searchTerm || 
+                (auditor.name && auditor.name.toLowerCase().includes(searchTerm)) ||
+                (auditor.registrationNumber && auditor.registrationNumber.toLowerCase().includes(searchTerm));
+
+            // check region matches
+            const matchesRegion = !selectedRegion || 
+                (auditor.regions && auditor.regions.toLowerCase().includes(selectedRegion.toLowerCase()));
+
+            // check certifications match
+            const matchesCertifications = (
+                (!standardChecked || (auditor.certifications && auditor.certifications.standard === "Yes")) &&
+                (!cookChillChecked || (auditor.certifications && auditor.certifications.cookChill === "Yes")) &&
+                (!heatTreatmentChecked || (auditor.certifications && auditor.certifications.heatTreatment === "Yes"))
+            );
+
+            // return true if all match
+            return matchesSearch && matchesRegion && matchesCertifications;
+        });
+
+        renderAuditors(filtered);
+    }
+
+    // add event listeners
+    document.querySelector(".search-button").addEventListener("click", filterAuditors);
+    document.querySelector(".auditor-search-input").addEventListener("keyup", (e) => {
+        // search on enter key
+        if (e.key === "Enter") filterAuditors();
+    });
+    document.getElementById("region-select").addEventListener("change", filterAuditors);
+    document.getElementById("standard").addEventListener("change", filterAuditors);
+    document.getElementById("cookChill").addEventListener("change", filterAuditors);
+    document.getElementById("heatTreatment").addEventListener("change", filterAuditors);
+
+    // create cards for each auditor
     function renderAuditors(auditorList) {
         const resultsContainer = document.getElementById("results-container");
         resultsContainer.innerHTML = "";
 
+        // show no results message
+        if (auditorList.length === 0) {
+            const noResults = document.createElement("div");
+            noResults.className = "no-results";
+            noResults.textContent = "No auditors found matching your criteria";
+            resultsContainer.appendChild(noResults);
+            return;
+        }
+
         auditorList.forEach((auditor) => {
-            // create result card
+            // create card
             const card = document.createElement("div");
             card.className = "result-card";
 
-            // create header
+            // add header
             const header = document.createElement("div");
             header.className = "result-header";
 
             const name = document.createElement("h3");
-            name.textContent = auditor.name;
+            // use n/a if no name
+            name.textContent = auditor.name || "N/A";
 
             const regNumber = document.createElement("span");
             regNumber.className = "registration-number";
-            regNumber.textContent = auditor.registrationNumber;
+            // use n/a if no registration
+            regNumber.textContent = auditor.registrationNumber || "N/A";
 
             header.appendChild(name);
             header.appendChild(regNumber);
 
-            // create content
+            // add content section
             const content = document.createElement("div");
             content.className = "result-content";
 
             const grid = document.createElement("div");
             grid.className = "result-grid";
 
-            // company info
+            // add company info
             const companyInfo = document.createElement("div");
             companyInfo.className = "company-info";
 
             const companyName = document.createElement("p");
             companyName.className = "info-label";
-            companyName.textContent = auditor.company;
+            // use n/a if no company
+            companyName.textContent = auditor.company || "N/A";
 
             const contactInfo = document.createElement("div");
             contactInfo.className = "info-value";
 
             const phone = document.createElement("p");
-            // phone.textContent = `Phone: ${auditor.phone}`;            
-            // phone.textContent = `Phone: ${
-            //     Array.isArray(auditor.phone) ? auditor.phone.join(", ") : auditor.phone
-            // }`;
+            // use n/a if no phone
+            phone.textContent = `Phone: ${auditor.phone || "N/A"}`;
 
             const email = document.createElement("p");
-            email.textContent = `Email: ${auditor.email}`;
+            // use n/a if no email
+            email.textContent = `Email: ${auditor.email || "N/A"}`;
 
             contactInfo.appendChild(phone);
             contactInfo.appendChild(email);
@@ -122,7 +160,7 @@ document.addEventListener("DOMContentLoaded", function () {
             companyInfo.appendChild(companyName);
             companyInfo.appendChild(contactInfo);
 
-            // certification info
+            // add certification info
             const certInfo = document.createElement("div");
             certInfo.className = "certification-info";
 
@@ -133,29 +171,24 @@ document.addEventListener("DOMContentLoaded", function () {
             const certDetails = document.createElement("div");
             certDetails.className = "info-value";
 
-            if ("scopes" in auditor.certifications) {
-                const scopes = document.createElement("p");
-                scopes.textContent = `Scopes - ${auditor.certifications.scopes}`;
-                certDetails.appendChild(scopes);
-            } else {
-                const standard = document.createElement("p");
-                standard.textContent = `Standard: ${auditor.certifications.standard}`;
+            const standard = document.createElement("p");
+            // use n/a if no standard cert
+            standard.textContent = `Standard: ${auditor.certifications?.standard || "N/A"}`;
 
-                const cookChill = document.createElement("p");
-                cookChill.textContent = `Cook Chill: ${auditor.certifications.cookChill}`;
+            const cookChill = document.createElement("p");
+            cookChill.textContent = `Cook Chill: ${auditor.certifications?.cookChill || "N/A"}`;
 
-                const heatTreatment = document.createElement("p");
-                heatTreatment.textContent = `Heat Treatment: ${auditor.certifications.heatTreatment}`;
+            const heatTreatment = document.createElement("p");
+            heatTreatment.textContent = `Heat Treatment: ${auditor.certifications?.heatTreatment || "N/A"}`;
 
-                certDetails.appendChild(standard);
-                certDetails.appendChild(cookChill);
-                certDetails.appendChild(heatTreatment);
-            }
+            certDetails.appendChild(standard);
+            certDetails.appendChild(cookChill);
+            certDetails.appendChild(heatTreatment);
 
             certInfo.appendChild(certTitle);
             certInfo.appendChild(certDetails);
 
-            // region info
+            // add region info
             const regionInfo = document.createElement("div");
             regionInfo.className = "region-info";
 
@@ -165,46 +198,37 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const regionDetails = document.createElement("p");
             regionDetails.className = "info-value";
-            regionDetails.textContent = auditor.regions;
-            // if (Array.isArray(auditor.regions)) {
-            //     const list = document.createElement("ul");
-            //     auditor.regions.forEach(region => {
-            //         const li = document.createElement("li");
-            //         li.textContent = region;
-            //         list.appendChild(li);
-            //     });
-            //     regionDetails.appendChild(list);
-            // } else {
-            //     regionDetails.textContent = auditor.regions || "N/A";
-            // }
+            // use n/a if no regions
+            regionDetails.textContent = auditor.regions || "N/A";
 
             regionInfo.appendChild(regionTitle);
             regionInfo.appendChild(regionDetails);
 
-            // append all sections to grid
+            // add sections to grid
             grid.appendChild(companyInfo);
             grid.appendChild(certInfo);
             grid.appendChild(regionInfo);
 
-            // append grid to content
+            // add grid to content
             content.appendChild(grid);
 
-            // append header and content to card
+            // add everything to card
             card.appendChild(header);
             card.appendChild(content);
 
-            // append card to results container
+            // add card to page
             resultsContainer.appendChild(card);
         });
     }
 
-    // // Fetch and display auditors
+    // load and show data
     fetch("Approved_Auditors.csv")
         .then(res => res.text())
         .then(data => {
             const parsed = parseAuditorCSV(data);
 
-            const auditors = parsed
+            // format the data
+            allAuditors = parsed
                 .filter(row => row["Organisation"])
                 .map((row, index) => ({
                     id: index + 1,
@@ -212,7 +236,6 @@ document.addEventListener("DOMContentLoaded", function () {
                     registrationNumber: row["Approval No."],
                     company: row["Organisation"],
                     phone: row["Phone No."],
-                    // phone: row["Phone No."]?.split(",").map(p => p.trim()),
                     email: row["Email"],
                     certifications: {
                         standard: row["Standard (high risk)"],
@@ -220,16 +243,17 @@ document.addEventListener("DOMContentLoaded", function () {
                         heatTreatment: row["Heat Treatment"]
                     },
                     regions: row["Local government areas of service"]
-                        // ? row["Local government areas of service"].split(",").map(r => r.trim())
-                        // : []
-            }));
+                }));
 
-            renderAuditors(auditors); 
+            // setup and show initial data
+            const uniqueRegions = getUniqueRegions(allAuditors);
+            populateRegionDropdown(uniqueRegions);
+            renderAuditors(allAuditors);
         })
         .catch(err => {
+            // log any errors
             console.error("Error loading CSV:", err);
         });
-
 
     // todo: add these features later
     // 1. search functionality - filter cards by name or registration number
