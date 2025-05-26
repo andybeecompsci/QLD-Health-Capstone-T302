@@ -21,11 +21,11 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // get list of unique regions
     function getUniqueRegions(auditors) {
-        const allRegions = new Set(); //set handles dupes
+        const allRegions = new Set();
         auditors.forEach(auditor => {
             // check if regions exist
             if (auditor.regions) {
-                const regions = auditor.regions.split(",").map(r => r.trim());
+                const regions = auditor.regions.split(",").map(r => r.trim().replace(/['"]+/g, ''));
                 regions.forEach(region => {
                     // skip empty regions
                     if (region) allRegions.add(region);
@@ -41,6 +41,12 @@ document.addEventListener("DOMContentLoaded", function () {
         const dropdown = document.getElementById("region-select");
         // add default option
         dropdown.innerHTML = '<option value="" disabled selected>Choose</option>';
+        // add any option
+        const anyOption = document.createElement("option");
+        anyOption.value = "any";
+        anyOption.textContent = "Any";
+        dropdown.appendChild(anyOption);
+        
         regions.forEach(region => {
             const option = document.createElement("option");
             option.value = region;
@@ -63,8 +69,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 (auditor.name && auditor.name.toLowerCase().includes(searchTerm)) ||
                 (auditor.registrationNumber && auditor.registrationNumber.toLowerCase().includes(searchTerm));
 
-            // check region matches
-            const matchesRegion = !selectedRegion || 
+            // check region matches (skip if "any" is selected)
+            const matchesRegion = selectedRegion === "any" || !selectedRegion || 
                 (auditor.regions && auditor.regions.toLowerCase().includes(selectedRegion.toLowerCase()));
 
             // check certifications match
