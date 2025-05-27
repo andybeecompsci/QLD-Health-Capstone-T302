@@ -3,17 +3,70 @@ document.addEventListener("DOMContentLoaded", function () {
 
     // convert csv data to usable format
     function parseAuditorCSV(data) {
-        const [headerLine, ...lines] = data.trim().split("\n");
-        const headers = headerLine.split(",");
+        const rows = [];
+        let currentRow = '';
+        let insideQuotes = false;
 
-        return lines.map(line => {
-            const values = line.split(",");
+        // merge if row is multiple lines long
+        data.split(/\r?\n/).forEach(line => {
+            const quoteCount = (line.match(/"/g) || []).length;
+            // add line to current row
+            currentRow += (currentRow ? "\n" : "") + line;
+            
+            // push complete row if number of quotes is even and we arent inside a quote
+            if (quoteCount % 2 === 0 && !insideQuotes) {
+                rows.push(currentRow);
+                currentRow = '';
+            } else {
+                // continue collecting lines
+                insideQuotes = !insideQuotes;
+            }
+        });
+
+        //get headers and remaining rows
+        const [headerLine, ...dataLines] = rows;
+        const headers = splitCSVLine(headerLine);
+
+        //convert rows into objects by column name
+        return dataLines.map(line => {
+            const values = splitCSVLine(line); // split row fields
             const obj = {};
             headers.forEach((header, i) => {
-                obj[header.trim()] = values[i]?.trim();
+                obj[header.trim()] = values[i] || ""; //assign empty string if no value
             });
             return obj;
         });
+    }
+
+    // function to split a line in csv into array of values
+    function splitCSVLine(line) {
+        const values = [];
+        let current = '';
+        let insideQuotes = false;
+
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            const nextChar = line[i + 1];
+
+            if (char === '"' && insideQuotes && nextChar === '"') {
+                current += '"'; // escaped quote
+                i++;
+            } else if (char === '"') {
+                // flag when encountering quotes inside
+                insideQuotes = !insideQuotes;
+            } else if (char === ',' && !insideQuotes) {
+                // end of field if outside quotes and comma is found
+                values.push(current.trim());
+                current = '';
+            } else {
+                // add char to field
+                current += char;
+            }
+        }
+        //push final field
+        values.push(current.trim());
+
+        return values;
     }
 
     // store all auditors
@@ -152,9 +205,13 @@ document.addEventListener("DOMContentLoaded", function () {
             const contactInfo = document.createElement("div");
             contactInfo.className = "info-value";
 
-            const phone = document.createElement("p");
-            // use n/a if no phone
-            phone.textContent = `Phone: ${auditor.phone || "N/A"}`;
+            const phone = document.createElement("div");
+            if (Array.isArray(auditor.phone)) {
+                phone.innerHTML = "Phone:<br>" + auditor.phone.map(p => `<div>${p}</div>`).join("");
+            } else {
+                // use n/a if no phone
+                phone.innerHTML = `Phone:<br><div>${auditor.phone || "N/A"}</div>`;
+            }
 
             const email = document.createElement("p");
             // use n/a if no email
@@ -241,7 +298,8 @@ document.addEventListener("DOMContentLoaded", function () {
                     name: row["Auditor Name"],
                     registrationNumber: row["Approval No."],
                     company: row["Organisation"],
-                    phone: row["Phone No."],
+                    phone: row["Phone No."]
+                            .match(/\d{2,4}(?: \d{3,4}){2}/g), // phone numbers regex
                     email: row["Email"],
                     certifications: {
                         standard: row["Standard (high risk)"],
@@ -257,7 +315,7 @@ document.addEventListener("DOMContentLoaded", function () {
             renderAuditors(allAuditors);
         })
         .catch(err => {
-            // log any errors
+            // log errors
             console.error("Error loading CSV:", err);
         });
 
