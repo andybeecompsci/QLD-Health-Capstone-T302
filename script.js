@@ -259,10 +259,39 @@ document.addEventListener("DOMContentLoaded", function () {
             regionTitle.className = "info-label";
             regionTitle.textContent = "Regions";
 
-            const regionDetails = document.createElement("p");
+            const regionDetails = document.createElement("div");
             regionDetails.className = "info-value";
             // use n/a if no regions
-            regionDetails.textContent = auditor.regions || "N/A";
+            const fullText = auditor.regions || "N/A";
+            // checks if text is over 210 chars long
+            const isLong = fullText.length > 210; 
+            // span element for region text
+            const preview = document.createElement("span");
+            preview.textContent = isLong ? fullText.slice(0, 200) + "..." : fullText; 
+            // extended span element to show full text
+            const full = document.createElement("span");
+            full.textContent = fullText;
+            full.style.display = "none";
+
+            // clickable element for span 
+            const toggle = document.createElement("a");
+            toggle.href = "#";
+            toggle.textContent = "Show more";
+            toggle.className = "toggle-link";
+            toggle.style.display = isLong ? "inline" : "none";
+            toggle.style.marginLeft = "8px";
+
+            toggle.addEventListener("click", function (e) {
+                e.preventDefault();
+                const expanded = full.style.display === "inline";
+                preview.style.display = expanded ? "inline" : "none";
+                full.style.display = expanded ? "none" : "inline";
+                toggle.textContent = expanded ? "Show more" : "Show less";
+            });
+            // add toggle elements to region details
+            regionDetails.appendChild(preview);
+            regionDetails.appendChild(full);
+            regionDetails.appendChild(toggle);
 
             regionInfo.appendChild(regionTitle);
             regionInfo.appendChild(regionDetails);
@@ -323,4 +352,5 @@ document.addEventListener("DOMContentLoaded", function () {
     // 1. search functionality - filter cards by name or registration number
     // 2. region filter - dropdown to filter by region
     // 3. certification filters - checkboxes to filter by certification types
+    // 4. make cards appear in random order
 });

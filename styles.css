@@ -256,6 +256,15 @@ body {
     color: #666;
 }
 
+.toggle-link {
+    color: #0082b8;
+    cursor: pointer;
+}
+
+.toggle-link:hover {
+    text-decoration: underline;
+}
+
 /* footer */
 .site-footer {
     background-color: #073b4c;
