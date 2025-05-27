@@ -140,6 +140,14 @@ document.addEventListener("DOMContentLoaded", function () {
         renderAuditors(filtered);
     }
 
+    // function to shuffle the order of the list
+    function shuffleArray(array) {
+        for (let i = array.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [array[i], array[j]] = [array[j], array[i]];
+        }
+    }
+
     // add event listeners
     document.querySelector(".search-button").addEventListener("click", filterAuditors);
     document.querySelector(".auditor-search-input").addEventListener("keyup", (e) => {
@@ -155,6 +163,9 @@ document.addEventListener("DOMContentLoaded", function () {
     function renderAuditors(auditorList) {
         const resultsContainer = document.getElementById("results-container");
         resultsContainer.innerHTML = "";
+
+        // randomize the order of auditor list
+        shuffleArray(auditorList);
 
         // show no results message
         if (auditorList.length === 0) {
@@ -327,8 +338,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     name: row["Auditor Name"],
                     registrationNumber: row["Approval No."],
                     company: row["Organisation"],
-                    phone: row["Phone No."]
-                            .match(/\d{2,4}(?: \d{3,4}){2}/g), // phone numbers regex
+                    phone: row["Phone No."].match(/\d{2,4}(?: \d{3,4}){2}/g), // phone numbers regex
                     email: row["Email"],
                     certifications: {
                         standard: row["Standard (high risk)"],
@@ -341,6 +351,19 @@ document.addEventListener("DOMContentLoaded", function () {
             // setup and show initial data
             const uniqueRegions = getUniqueRegions(allAuditors);
             populateRegionDropdown(uniqueRegions);
+
+            // debugging checking for missing data and dupes //////////////////////////// DELETE LATER
+            console.log("Total parsed rows:", parsed);
+            console.log("Total mapped auditors:", allAuditors.length);
+            console.log("Missing phones for:", parsed.filter(r => !r["Phone No."]).map(r => r["Auditor Name"]));
+            const duplicates = allAuditors.reduce((acc, a) => {
+                acc[a.company] = (acc[a.company] || 0) + 1;
+                return acc;
+            }, {});
+            console.log("Auditor count per organisation:", duplicates);
+            console.log("Auditor Names:", allAuditors.map(a => a.name));
+            //////////////////////////////////////////////
+
             renderAuditors(allAuditors);
         })
         .catch(err => {
