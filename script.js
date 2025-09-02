@@ -126,15 +126,15 @@ document.addEventListener("DOMContentLoaded", function () {
             const matchesRegion = selectedRegion === "any" || !selectedRegion || 
                 (auditor.regions && auditor.regions.toLowerCase().includes(selectedRegion.toLowerCase()));
 
-            // check certifications match
-            const matchesCertifications = (
-                (!standardChecked || (auditor.certifications && auditor.certifications.standard === "Yes")) &&
-                (!cookChillChecked || (auditor.certifications && auditor.certifications.cookChill === "Yes")) &&
-                (!heatTreatmentChecked || (auditor.certifications && auditor.certifications.heatTreatment === "Yes"))
+            // check scopes match
+            const matchesScopes = (
+                (!standardChecked || (auditor.scopes && auditor.scopes.standard === "Yes")) &&
+                (!cookChillChecked || (auditor.scopes && auditor.scopes.cookChill === "Yes")) &&
+                (!heatTreatmentChecked || (auditor.scopes && auditor.scopes.heatTreatment === "Yes"))
             );
 
             // return true if all match
-            return matchesSearch && matchesRegion && matchesCertifications;
+            return matchesSearch && matchesRegion && matchesScopes;
         });
 
         renderAuditors(filtered);
@@ -194,8 +194,14 @@ document.addEventListener("DOMContentLoaded", function () {
             // use n/a if no registration
             regNumber.textContent = auditor.registrationNumber || "N/A";
 
+            const expiryDate = document.createElement("span");
+            expiryDate.className = "expiry-date";
+            // use n/a if no expiry date
+            expiryDate.textContent = `Expires: ${auditor.expiryDate || "N/A"}`;
+
             header.appendChild(name);
             header.appendChild(regNumber);
+            header.appendChild(expiryDate);
 
             // add content section
             const content = document.createElement("div");
@@ -225,8 +231,17 @@ document.addEventListener("DOMContentLoaded", function () {
             }
 
             const email = document.createElement("p");
-            // use n/a if no email
-            email.textContent = `Email: ${auditor.email || "N/A"}`;
+            // create clickable email link if email exists, otherwise show n/a
+            if (auditor.email) {
+                const emailLink = document.createElement("a");
+                // simple mailto link that opens email client
+                emailLink.href = `mailto:${auditor.email}`;
+                emailLink.textContent = auditor.email;
+                email.textContent = "Email: ";
+                email.appendChild(emailLink);
+            } else {
+                email.textContent = "Email: N/A";
+            }
 
             contactInfo.appendChild(phone);
             contactInfo.appendChild(email);
@@ -234,33 +249,33 @@ document.addEventListener("DOMContentLoaded", function () {
             companyInfo.appendChild(companyName);
             companyInfo.appendChild(contactInfo);
 
-            // add certification info
-            const certInfo = document.createElement("div");
-            certInfo.className = "certification-info";
+            // add scope info
+            const scopeInfo = document.createElement("div");
+            scopeInfo.className = "scope-info";
 
-            const certTitle = document.createElement("p");
-            certTitle.className = "info-label";
-            certTitle.textContent = "Certifications";
+            const scopeTitle = document.createElement("p");
+            scopeTitle.className = "info-label";
+            scopeTitle.textContent = "Scopes";
 
-            const certDetails = document.createElement("div");
-            certDetails.className = "info-value";
+            const scopeDetails = document.createElement("div");
+            scopeDetails.className = "info-value";
 
             const standard = document.createElement("p");
-            // use n/a if no standard cert
-            standard.textContent = `Standard: ${auditor.certifications?.standard || "N/A"}`;
+            // use n/a if no high risk scope
+            standard.textContent = `High Risk: ${auditor.scopes?.standard || "N/A"}`;
 
             const cookChill = document.createElement("p");
-            cookChill.textContent = `Cook Chill: ${auditor.certifications?.cookChill || "N/A"}`;
+            cookChill.textContent = `Cook Chill: ${auditor.scopes?.cookChill || "N/A"}`;
 
             const heatTreatment = document.createElement("p");
-            heatTreatment.textContent = `Heat Treatment: ${auditor.certifications?.heatTreatment || "N/A"}`;
+            heatTreatment.textContent = `Heat Treatment: ${auditor.scopes?.heatTreatment || "N/A"}`;
 
-            certDetails.appendChild(standard);
-            certDetails.appendChild(cookChill);
-            certDetails.appendChild(heatTreatment);
+            scopeDetails.appendChild(standard);
+            scopeDetails.appendChild(cookChill);
+            scopeDetails.appendChild(heatTreatment);
 
-            certInfo.appendChild(certTitle);
-            certInfo.appendChild(certDetails);
+            scopeInfo.appendChild(scopeTitle);
+            scopeInfo.appendChild(scopeDetails);
 
             // add region info
             const regionInfo = document.createElement("div");
@@ -309,7 +324,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
             // add sections to grid
             grid.appendChild(companyInfo);
-            grid.appendChild(certInfo);
+            grid.appendChild(scopeInfo);
             grid.appendChild(regionInfo);
 
             // add grid to content
@@ -340,11 +355,13 @@ document.addEventListener("DOMContentLoaded", function () {
                     company: row["Organisation"],
                     phone: row["Phone No."].match(/\d{2,4}(?: \d{3,4}){2}/g), // phone numbers regex
                     email: row["Email"],
-                    certifications: {
+                    scopes: {
                         standard: row["Standard (high risk)"],
                         cookChill: row["Cook Chill"],
                         heatTreatment: row["Heat Treatment"]
                     },
+                    // handle expiry date from csv column with trailing space
+                    expiryDate: row["Approval Expiry "] || row["Approval Expiry"],
                     regions: row["Local government areas of service"]
                 }));
 
@@ -374,6 +391,6 @@ document.addEventListener("DOMContentLoaded", function () {
     // todo: add these features later
     // 1. search functionality - filter cards by name or registration number
     // 2. region filter - dropdown to filter by region
-    // 3. certification filters - checkboxes to filter by certification types
+    // 3. scope filters - checkboxes to filter by scope types
     // 4. make cards appear in random order
 });

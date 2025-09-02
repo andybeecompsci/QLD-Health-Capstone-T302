@@ -157,13 +157,13 @@ body {
     }
 
     .regions-filter,
-    .certifications {
+    .scopes {
         width: 48%;
     }
 }
 
 .regions-filter h3,
-.certifications h3 {
+.scopes h3 {
     font-size: 18px;
     margin-bottom: 10px;
     font-weight: 500;
@@ -239,7 +239,7 @@ body {
 }
 
 .company-info,
-.certification-info,
+.scope-info,
 .region-info {
     display: flex;
     flex-direction: column;
