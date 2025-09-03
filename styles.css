@@ -160,10 +160,16 @@ body {
     .scopes {
         width: 48%;
     }
+
+    .auditor-filter,
+    .scopes {
+        width: 48%;
+    }
 }
 
 .regions-filter h3,
-.scopes h3 {
+.scopes h3, 
+.auditor-filter h3 { 
     font-size: 18px;
     margin-bottom: 10px;
     font-weight: 500;

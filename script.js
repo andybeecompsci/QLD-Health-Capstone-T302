@@ -115,6 +115,8 @@ document.addEventListener("DOMContentLoaded", function () {
         const standardChecked = document.getElementById("standard").checked;
         const cookChillChecked = document.getElementById("cookChill").checked;
         const heatTreatmentChecked = document.getElementById("heatTreatment").checked;
+        const selectedSource = document.getElementById("auditor-source-select").value;
+
 
         const filtered = allAuditors.filter(auditor => {
             // check name and registration matches
@@ -133,8 +135,11 @@ document.addEventListener("DOMContentLoaded", function () {
                 (!heatTreatmentChecked || (auditor.scopes && auditor.scopes.heatTreatment === "Yes"))
             );
 
+            //source filter 
+            const matchesSource = selectedSource === "any" || auditor.source === selectedSource;
+
             // return true if all match
-            return matchesSearch && matchesRegion && matchesScopes;
+            return matchesSearch && matchesRegion && matchesScopes && matchesSource;;
         });
 
         renderAuditors(filtered);
@@ -158,6 +163,7 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("standard").addEventListener("change", filterAuditors);
     document.getElementById("cookChill").addEventListener("change", filterAuditors);
     document.getElementById("heatTreatment").addEventListener("change", filterAuditors);
+    document.getElementById("auditor-source-select").addEventListener("change", filterAuditors);
 
     // create cards for each auditor
     function renderAuditors(auditorList) {
@@ -218,6 +224,12 @@ document.addEventListener("DOMContentLoaded", function () {
             companyName.className = "info-label";
             // use n/a if no company
             companyName.textContent = auditor.company || "N/A";
+
+            //source MAYBE DELETE LATER
+            const sourceTag = document.createElement("p");
+            sourceTag.className = "auditor-source";
+            sourceTag.textContent = `Source: ${auditor.source}`;
+            companyInfo.appendChild(sourceTag);
 
             const contactInfo = document.createElement("div");
             contactInfo.className = "info-value";
@@ -340,57 +352,116 @@ document.addEventListener("DOMContentLoaded", function () {
     }
 
     // load and show data
-    fetch("Approved_Auditors.csv")
-        .then(res => res.text())
-        .then(data => {
-            const parsed = parseAuditorCSV(data);
+    // fetch("Approved_Auditors.csv")
+    //     .then(res => res.text())
+    //     .then(data => {
+    //         const parsed = parseAuditorCSV(data);
 
-            // format the data
-            allAuditors = parsed
-                .filter(row => row["Organisation"])
-                .map((row, index) => ({
-                    id: index + 1,
-                    name: row["Auditor Name"],
-                    registrationNumber: row["Approval No."],
-                    company: row["Organisation"],
-                    phone: row["Phone No."].match(/\d{2,4}(?: \d{3,4}){2}/g), // phone numbers regex
-                    email: row["Email"],
-                    scopes: {
-                        standard: row["Standard (high risk)"],
-                        cookChill: row["Cook Chill"],
-                        heatTreatment: row["Heat Treatment"]
-                    },
-                    // handle expiry date from csv column with trailing space
-                    expiryDate: row["Approval Expiry "] || row["Approval Expiry"],
-                    regions: row["Local government areas of service"]
-                }));
+    //         // format the data
+    //         allAuditors = parsed
+    //             .filter(row => row["Organisation"])
+    //             .map((row, index) => ({
+    //                 id: index + 1,
+    //                 name: row["Auditor Name"],
+    //                 registrationNumber: row["Approval No."],
+    //                 company: row["Organisation"],
+    //                 phone: row["Phone No."].match(/\d{2,4}(?: \d{3,4}){2}/g), // phone numbers regex
+    //                 email: row["Email"],
+    //                 scopes: {
+    //                     standard: row["Standard (high risk)"],
+    //                     cookChill: row["Cook Chill"],
+    //                     heatTreatment: row["Heat Treatment"]
+    //                 },
+    //                 // handle expiry date from csv column with trailing space
+    //                 expiryDate: row["Approval Expiry "] || row["Approval Expiry"],
+    //                 regions: row["Local government areas of service"]
+    //             }));
+
+    //         // setup and show initial data
+    //         const uniqueRegions = getUniqueRegions(allAuditors);
+    //         populateRegionDropdown(uniqueRegions);
+
+    //         // debugging checking for missing data and dupes //////////////////////////// DELETE LATER
+    //         console.log("Total parsed rows:", parsed);
+    //         console.log("Total mapped auditors:", allAuditors.length);
+    //         console.log("Missing phones for:", parsed.filter(r => !r["Phone No."]).map(r => r["Auditor Name"]));
+    //         const duplicates = allAuditors.reduce((acc, a) => {
+    //             acc[a.company] = (acc[a.company] || 0) + 1;
+    //             return acc;
+    //         }, {});
+    //         console.log("Auditor count per organisation:", duplicates);
+    //         console.log("Auditor Names:", allAuditors.map(a => a.name));
+    //         //////////////////////////////////////////////
+
+    //         renderAuditors(allAuditors);
+    //     })
+    //     .catch(err => {
+    //         // log errors
+    //         console.error("Error loading CSV:", err);
+    //     });
+
+// load and show data from Excel with multiple sheets
+    fetch("data/Approved_Auditor_Register.xlsx")
+        .then(res => res.arrayBuffer())
+        .then(buffer => {
+            const workbook = XLSX.read(buffer, { type: "array" });
+            const allParsedAuditors = [];
+
+            workbook.SheetNames.forEach(sheetName => {
+                const sheet = workbook.Sheets[sheetName];
+                const json = XLSX.utils.sheet_to_json(sheet);
+
+                // label source by sheet name
+                const sourceLabel = (() => {
+                    const name = sheetName.toLowerCase();
+                    if (name.includes("local")) return "Local Government Auditors";
+                    if (name.includes("qld")) return "QLD Health Approved Auditors";
+                    return "Approved Auditors";
+                })();
+
+                const parsed = json
+                    .filter(row => row["Organisation"])
+                    .map((row, index) => ({
+                        id: allParsedAuditors.length + index + 1,
+                        name: row["Auditor Name"],
+                        registrationNumber: row["Approval No."],
+                        company: row["Organisation"],
+                        phone: row["Phone No."]?.match(/\d{2,4}(?: \d{3,4}){2}/g),
+                        email: row["Email"],
+                        scopes: {
+                            standard: row["Standard (high risk)"],
+                            cookChill: row["Cook Chill"],
+                            heatTreatment: row["Heat Treatment"]
+                        },
+                        expiryDate: row["Approval Expiry "] || row["Approval Expiry"],
+                        regions: row["Local government areas of service"],
+                        source: sourceLabel // new field for filtering
+                    }));
+
+                allParsedAuditors.push(...parsed);
+            });
+
+            allAuditors = allParsedAuditors;
 
             // setup and show initial data
             const uniqueRegions = getUniqueRegions(allAuditors);
             populateRegionDropdown(uniqueRegions);
 
-            // debugging checking for missing data and dupes //////////////////////////// DELETE LATER
-            console.log("Total parsed rows:", parsed);
-            console.log("Total mapped auditors:", allAuditors.length);
-            console.log("Missing phones for:", parsed.filter(r => !r["Phone No."]).map(r => r["Auditor Name"]));
-            const duplicates = allAuditors.reduce((acc, a) => {
-                acc[a.company] = (acc[a.company] || 0) + 1;
+            // debug checks REMOVE LATER
+            console.log("Total auditors parsed:", allAuditors.length);
+            console.log("Auditors missing phone:", allAuditors.filter(a => !a.phone).map(a => a.name));
+            console.log("Auditor source breakdown:", allAuditors.reduce((acc, a) => {
+                acc[a.source] = (acc[a.source] || 0) + 1;
                 return acc;
-            }, {});
-            console.log("Auditor count per organisation:", duplicates);
-            console.log("Auditor Names:", allAuditors.map(a => a.name));
-            //////////////////////////////////////////////
+            }, {}));
+            console.log("Auditor names:", allAuditors.map(a => a.name));
 
             renderAuditors(allAuditors);
         })
         .catch(err => {
-            // log errors
-            console.error("Error loading CSV:", err);
+            console.error("Error loading Excel:", err);
         });
+    
 
-    // todo: add these features later
-    // 1. search functionality - filter cards by name or registration number
-    // 2. region filter - dropdown to filter by region
-    // 3. scope filters - checkboxes to filter by scope types
-    // 4. make cards appear in random order
+
 });
