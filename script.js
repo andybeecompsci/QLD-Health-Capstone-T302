@@ -1,7 +1,7 @@
 document.addEventListener("DOMContentLoaded", function () {
     // wait for page to load
 
-    // convert csv data to usable format
+    // convert csv data to usable format /// NO LONGER NEEDED ///////////
     function parseAuditorCSV(data) {
         const rows = [];
         let currentRow = '';
@@ -37,6 +37,15 @@ document.addEventListener("DOMContentLoaded", function () {
             return obj;
         });
     }
+
+    // convert date in excel to js date
+    function excelDateToJSDate(serial) {
+        const utc_days = Math.floor(serial - 25569); // days since 1970-01-01
+        const utc_value = utc_days * 86400; // seconds in a day
+        const date = new Date(utc_value * 1000); // convert to milliseconds
+        const options = { year: 'numeric', month: 'short', day: 'numeric' }; // format date
+        return date.toLocaleDateString('en-AU', options);
+}
 
     // function to split a line in csv into array of values
     function splitCSVLine(line) {
@@ -242,9 +251,12 @@ document.addEventListener("DOMContentLoaded", function () {
                 phone.innerHTML = `Phone:<br><div>${auditor.phone || "N/A"}</div>`;
             }
 
+            // trim email if it is n/a
+
             const email = document.createElement("p");
-            // create clickable email link if email exists, otherwise show n/a
-            if (auditor.email) {
+            email.className = "email";
+            // create clickable email link if email exists, otherwise show hide email
+            if (auditor.email && auditor.email.trim().toLowerCase() !== "n/a") {
                 const emailLink = document.createElement("a");
                 // simple mailto link that opens email client
                 emailLink.href = `mailto:${auditor.email}`;
@@ -252,7 +264,7 @@ document.addEventListener("DOMContentLoaded", function () {
                 email.textContent = "Email: ";
                 email.appendChild(emailLink);
             } else {
-                email.textContent = "Email: N/A";
+                email.style.display = "none";
             }
 
             contactInfo.appendChild(phone);
@@ -351,54 +363,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // load and show data
-    // fetch("Approved_Auditors.csv")
-    //     .then(res => res.text())
-    //     .then(data => {
-    //         const parsed = parseAuditorCSV(data);
-
-    //         // format the data
-    //         allAuditors = parsed
-    //             .filter(row => row["Organisation"])
-    //             .map((row, index) => ({
-    //                 id: index + 1,
-    //                 name: row["Auditor Name"],
-    //                 registrationNumber: row["Approval No."],
-    //                 company: row["Organisation"],
-    //                 phone: row["Phone No."].match(/\d{2,4}(?: \d{3,4}){2}/g), // phone numbers regex
-    //                 email: row["Email"],
-    //                 scopes: {
-    //                     standard: row["Standard (high risk)"],
-    //                     cookChill: row["Cook Chill"],
-    //                     heatTreatment: row["Heat Treatment"]
-    //                 },
-    //                 // handle expiry date from csv column with trailing space
-    //                 expiryDate: row["Approval Expiry "] || row["Approval Expiry"],
-    //                 regions: row["Local government areas of service"]
-    //             }));
-
-    //         // setup and show initial data
-    //         const uniqueRegions = getUniqueRegions(allAuditors);
-    //         populateRegionDropdown(uniqueRegions);
-
-    //         // debugging checking for missing data and dupes //////////////////////////// DELETE LATER
-    //         console.log("Total parsed rows:", parsed);
-    //         console.log("Total mapped auditors:", allAuditors.length);
-    //         console.log("Missing phones for:", parsed.filter(r => !r["Phone No."]).map(r => r["Auditor Name"]));
-    //         const duplicates = allAuditors.reduce((acc, a) => {
-    //             acc[a.company] = (acc[a.company] || 0) + 1;
-    //             return acc;
-    //         }, {});
-    //         console.log("Auditor count per organisation:", duplicates);
-    //         console.log("Auditor Names:", allAuditors.map(a => a.name));
-    //         //////////////////////////////////////////////
-
-    //         renderAuditors(allAuditors);
-    //     })
-    //     .catch(err => {
-    //         // log errors
-    //         console.error("Error loading CSV:", err);
-    //     });
 
 // load and show data from Excel with multiple sheets
     fetch("data/Approved_Auditor_Register.xlsx")
@@ -433,7 +397,7 @@ document.addEventListener("DOMContentLoaded", function () {
                             cookChill: row["Cook Chill"],
                             heatTreatment: row["Heat Treatment"]
                         },
-                        expiryDate: row["Approval Expiry "] || row["Approval Expiry"],
+                        expiryDate: excelDateToJSDate(row["Approval Expiry "] || row["Approval Expiry"]),
                         regions: row["Local government areas of service"],
                         source: sourceLabel // new field for filtering
                     }));
