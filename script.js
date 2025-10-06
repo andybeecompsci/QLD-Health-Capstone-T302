@@ -400,7 +400,7 @@ document.addEventListener("DOMContentLoaded", function () {
     console.log("Starting to fetch Excel file from hosted URL...");
     // Excel file hosted on your personal website (andersonbee.com)
     // Using CORS proxy temporarily for testing
-    const excelUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://andersonbee.com/approved-auditor%20(4).xlsx");
+    const excelUrl = "https://api.codetabs.com/v1/proxy?quest=" + encodeURIComponent("https://andersonbee.com/approved-auditor%20(4).xlsx");
     
     // simple direct fetch - no CORS issues since it's a hosted file
     function loadExcelData() {
