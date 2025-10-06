@@ -1,7 +1,6 @@
 // QLD Health Capstone Project - Auditor Search Application
 // This script handles data loading, parsing, filtering, and rendering of approved auditors
 
-<<<<<<< HEAD
 document.addEventListener("DOMContentLoaded", function () {
     // wait for page to load before initializing all functionality
 
@@ -39,11 +38,6 @@ document.addEventListener("DOMContentLoaded", function () {
             return obj;
         });
     }
-
-    // convert csv data to usable format - handles Excel-like CSV with merged cells
-=======
-    // convert csv data to usable format /// NO LONGER NEEDED ///////////
->>>>>>> 45ad4682cbcc6e3f82ca45636624f0e73447657d
     function parseAuditorCSV(data) {
         const rows = [];
         let currentRow = '';
@@ -89,20 +83,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-<<<<<<< HEAD
     // function to split a line in csv into array of values - handles quoted fields properly
-=======
-    // convert date in excel to js date
-    function excelDateToJSDate(serial) {
-        const utc_days = Math.floor(serial - 25569); // days since 1970-01-01
-        const utc_value = utc_days * 86400; // seconds in a day
-        const date = new Date(utc_value * 1000); // convert to milliseconds
-        const options = { year: 'numeric', month: 'short', day: 'numeric' }; // format date
-        return date.toLocaleDateString('en-AU', options);
-}
-
-    // function to split a line in csv into array of values
->>>>>>> 45ad4682cbcc6e3f82ca45636624f0e73447657d
     function splitCSVLine(line) {
         const values = [];
         let current = '';
@@ -181,7 +162,6 @@ document.addEventListener("DOMContentLoaded", function () {
         const standardChecked = document.getElementById("standard").checked;
         const cookChillChecked = document.getElementById("cookChill").checked;
         const heatTreatmentChecked = document.getElementById("heatTreatment").checked;
-        const selectedSource = document.getElementById("auditor-source-select").value;
 
 
         const filtered = allAuditors.filter(auditor => {
@@ -201,16 +181,8 @@ document.addEventListener("DOMContentLoaded", function () {
                 (!heatTreatmentChecked || (auditor.scopes && auditor.scopes.heatTreatment === true))
             );
 
-<<<<<<< HEAD
             // return true if auditor matches all criteria
             return matchesSearch && matchesRegion && matchesScopes;
-=======
-            //source filter 
-            const matchesSource = selectedSource === "any" || auditor.source === selectedSource;
-
-            // return true if all match
-            return matchesSearch && matchesRegion && matchesScopes && matchesSource;;
->>>>>>> 45ad4682cbcc6e3f82ca45636624f0e73447657d
         });
 
         // render the filtered results
@@ -235,7 +207,6 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("standard").addEventListener("change", filterAuditors);
     document.getElementById("cookChill").addEventListener("change", filterAuditors);
     document.getElementById("heatTreatment").addEventListener("change", filterAuditors);
-    document.getElementById("auditor-source-select").addEventListener("change", filterAuditors);
 
     // create cards for each auditor and display them on the page
     function renderAuditors(auditorList) {
@@ -297,11 +268,6 @@ document.addEventListener("DOMContentLoaded", function () {
             // use n/a if no company name
             companyName.textContent = auditor.company || "N/A";
 
-            //source MAYBE DELETE LATER
-            const sourceTag = document.createElement("p");
-            sourceTag.className = "auditor-source";
-            sourceTag.textContent = `Source: ${auditor.source}`;
-            companyInfo.appendChild(sourceTag);
 
             const contactInfo = document.createElement("div");
             contactInfo.className = "info-value";
@@ -309,10 +275,10 @@ document.addEventListener("DOMContentLoaded", function () {
             const phone = document.createElement("div");
             if (Array.isArray(auditor.phone)) {
                 // handle multiple phone numbers
-                phone.innerHTML = "Phone:<br>" + auditor.phone.map(p => `<div>${p}</div>`).join("");
+                phone.innerHTML = "Phone: " + auditor.phone.join(", ");
             } else {
                 // use n/a if no phone number
-                phone.innerHTML = `Phone:<br><div>${auditor.phone || "N/A"}</div>`;
+                phone.innerHTML = `Phone: ${auditor.phone || "N/A"}`;
             }
 
             // trim email if it is n/a
@@ -430,7 +396,6 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-<<<<<<< HEAD
     // load and show data from hosted Excel file
     console.log("Starting to fetch Excel file from hosted URL...");
     // Excel file hosted on your personal website (andersonbee.com)
@@ -502,57 +467,11 @@ document.addEventListener("DOMContentLoaded", function () {
                     expiryDate: convertExcelDate(row["Approval Expiry "] || row["Approval Expiry"]),
                     regions: row["Local government areas of service"] || "N/A"
                 }));
-=======
-
-// load and show data from Excel with multiple sheets
-    fetch("data/Approved_Auditor_Register.xlsx")
-        .then(res => res.arrayBuffer())
-        .then(buffer => {
-            const workbook = XLSX.read(buffer, { type: "array" });
-            const allParsedAuditors = [];
-
-            workbook.SheetNames.forEach(sheetName => {
-                const sheet = workbook.Sheets[sheetName];
-                const json = XLSX.utils.sheet_to_json(sheet);
-
-                // label source by sheet name
-                const sourceLabel = (() => {
-                    const name = sheetName.toLowerCase();
-                    if (name.includes("local")) return "Local Government Auditors";
-                    if (name.includes("qld")) return "QLD Health Approved Auditors";
-                    return "Approved Auditors";
-                })();
-
-                const parsed = json
-                    .filter(row => row["Organisation"])
-                    .map((row, index) => ({
-                        id: allParsedAuditors.length + index + 1,
-                        name: row["Auditor Name"],
-                        registrationNumber: row["Approval No."],
-                        company: row["Organisation"],
-                        phone: row["Phone No."]?.match(/\d{2,4}(?: \d{3,4}){2}/g),
-                        email: row["Email"],
-                        scopes: {
-                            standard: row["Standard (high risk)"],
-                            cookChill: row["Cook Chill"],
-                            heatTreatment: row["Heat Treatment"]
-                        },
-                        expiryDate: excelDateToJSDate(row["Approval Expiry "] || row["Approval Expiry"]),
-                        regions: row["Local government areas of service"],
-                        source: sourceLabel // new field for filtering
-                    }));
-
-                allParsedAuditors.push(...parsed);
-            });
-
-            allAuditors = allParsedAuditors;
->>>>>>> 45ad4682cbcc6e3f82ca45636624f0e73447657d
 
             // setup region dropdown and display initial data
             const uniqueRegions = getUniqueRegions(allAuditors);
             populateRegionDropdown(uniqueRegions);
 
-<<<<<<< HEAD
             // render all auditors initially
             renderAuditors(allAuditors);
         } catch (parseErr) {
@@ -563,23 +482,5 @@ document.addEventListener("DOMContentLoaded", function () {
     
     // start loading data
     loadExcelData();
-=======
-            // debug checks REMOVE LATER
-            console.log("Total auditors parsed:", allAuditors.length);
-            console.log("Auditors missing phone:", allAuditors.filter(a => !a.phone).map(a => a.name));
-            console.log("Auditor source breakdown:", allAuditors.reduce((acc, a) => {
-                acc[a.source] = (acc[a.source] || 0) + 1;
-                return acc;
-            }, {}));
-            console.log("Auditor names:", allAuditors.map(a => a.name));
-
-            renderAuditors(allAuditors);
-        })
-        .catch(err => {
-            console.error("Error loading Excel:", err);
-        });
-    
-
->>>>>>> 45ad4682cbcc6e3f82ca45636624f0e73447657d
 
 });
