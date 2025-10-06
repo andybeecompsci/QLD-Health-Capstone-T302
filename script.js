@@ -1,13 +1,51 @@
-document.addEventListener("DOMContentLoaded", function () {
-    // wait for page to load
+// QLD Health Capstone Project - Auditor Search Application
+// This script handles data loading, parsing, filtering, and rendering of approved auditors
 
-    // convert csv data to usable format
+document.addEventListener("DOMContentLoaded", function () {
+    // wait for page to load before initializing all functionality
+
+    // convert excel data to usable format - handles actual Excel files
+    function parseAuditorExcel(arrayBuffer) {
+        // parse the excel file using xlsx library
+        const workbook = XLSX.read(arrayBuffer, { type: 'array' });
+        
+        // get the first worksheet
+        const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+        
+        // convert worksheet to json array
+        const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+        
+        // skip first 2 rows (empty row and description row), get headers from row 2 (index 2)
+        const [headerLine, ...dataLines] = jsonData.slice(2);
+        
+        // handle merged cells - track current organization name
+        let currentOrganization = "";
+        
+        // convert rows into objects by column name
+        return dataLines.map(line => {
+            const obj = {};
+            headerLine.forEach((header, i) => {
+                obj[header] = line[i] || "";
+            });
+            
+            // handle merged organization cells - if organization is empty, use the last one
+            if (obj["Organisation"] && obj["Organisation"].trim() !== "") {
+                currentOrganization = obj["Organisation"];
+            } else if (currentOrganization) {
+                obj["Organisation"] = currentOrganization;
+            }
+            
+            return obj;
+        });
+    }
+
+    // convert csv data to usable format - handles Excel-like CSV with merged cells
     function parseAuditorCSV(data) {
         const rows = [];
         let currentRow = '';
         let insideQuotes = false;
 
-        // merge if row is multiple lines long
+        // merge if row is multiple lines long (handles CSV with line breaks in quoted fields)
         data.split(/\r?\n/).forEach(line => {
             const quoteCount = (line.match(/"/g) || []).length;
             // add line to current row
@@ -18,27 +56,36 @@ document.addEventListener("DOMContentLoaded", function () {
                 rows.push(currentRow);
                 currentRow = '';
             } else {
-                // continue collecting lines
+                // continue collecting lines for multi-line quoted fields
                 insideQuotes = !insideQuotes;
             }
         });
 
-        //get headers and remaining rows
-        const [headerLine, ...dataLines] = rows;
+        // get headers and remaining rows (skip first 2 rows for Excel format)
+        const [headerLine, ...dataLines] = rows.slice(2);
         const headers = splitCSVLine(headerLine);
 
-        //convert rows into objects by column name
+        // convert rows into objects by column name
+        let currentOrganization = ""; // track current org for merged cells
         return dataLines.map(line => {
             const values = splitCSVLine(line); // split row fields
             const obj = {};
             headers.forEach((header, i) => {
-                obj[header.trim()] = values[i] || ""; //assign empty string if no value
+                obj[header.trim()] = values[i] || ""; // assign empty string if no value
             });
+            
+            // handle merged organization cells - if organization is empty, use the last one
+            if (obj["Organisation"] && obj["Organisation"].trim() !== "") {
+                currentOrganization = obj["Organisation"];
+            } else if (currentOrganization) {
+                obj["Organisation"] = currentOrganization;
+            }
+            
             return obj;
         });
     }
 
-    // function to split a line in csv into array of values
+    // function to split a line in csv into array of values - handles quoted fields properly
     function splitCSVLine(line) {
         const values = [];
         let current = '';
@@ -49,34 +96,35 @@ document.addEventListener("DOMContentLoaded", function () {
             const nextChar = line[i + 1];
 
             if (char === '"' && insideQuotes && nextChar === '"') {
-                current += '"'; // escaped quote
+                current += '"'; // handle escaped quotes (double quotes)
                 i++;
             } else if (char === '"') {
-                // flag when encountering quotes inside
+                // toggle quote state when encountering quotes
                 insideQuotes = !insideQuotes;
             } else if (char === ',' && !insideQuotes) {
                 // end of field if outside quotes and comma is found
                 values.push(current.trim());
                 current = '';
             } else {
-                // add char to field
+                // add char to current field
                 current += char;
             }
         }
-        //push final field
+        // push final field (last field in the line)
         values.push(current.trim());
 
         return values;
     }
 
-    // store all auditors
+
+    // store all auditors in global variable
     let allAuditors = [];
     
-    // get list of unique regions
+    // get list of unique regions from all auditors for dropdown filter
     function getUniqueRegions(auditors) {
         const allRegions = new Set();
         auditors.forEach(auditor => {
-            // check if regions exist
+            // check if regions exist for this auditor
             if (auditor.regions) {
                 const regions = auditor.regions.split(",").map(r => r.trim().replace(/['"]+/g, ''));
                 regions.forEach(region => {
@@ -85,21 +133,22 @@ document.addEventListener("DOMContentLoaded", function () {
                 });
             }
         });
-        // sort regions a-z
+        // sort regions alphabetically a-z
         return Array.from(allRegions).sort();
     }
 
-    // add regions to dropdown
+    // add regions to dropdown filter menu
     function populateRegionDropdown(regions) {
         const dropdown = document.getElementById("region-select");
-        // add default option
+        // add default placeholder option
         dropdown.innerHTML = '<option value="" disabled selected>Choose</option>';
-        // add any option
+        // add "any" option to show all regions
         const anyOption = document.createElement("option");
         anyOption.value = "any";
         anyOption.textContent = "Any";
         dropdown.appendChild(anyOption);
         
+        // add each unique region as an option
         regions.forEach(region => {
             const option = document.createElement("option");
             option.value = region;
@@ -108,7 +157,7 @@ document.addEventListener("DOMContentLoaded", function () {
         });
     }
 
-    // filter auditors based on search and filters
+    // filter auditors based on search term and selected filter options
     function filterAuditors() {
         const searchTerm = document.querySelector(".auditor-search-input").value.toLowerCase();
         const selectedRegion = document.getElementById("region-select").value;
@@ -117,41 +166,42 @@ document.addEventListener("DOMContentLoaded", function () {
         const heatTreatmentChecked = document.getElementById("heatTreatment").checked;
 
         const filtered = allAuditors.filter(auditor => {
-            // check name and registration matches
+            // check if auditor matches search term (name or registration number)
             const matchesSearch = !searchTerm || 
                 (auditor.name && auditor.name.toLowerCase().includes(searchTerm)) ||
                 (auditor.registrationNumber && auditor.registrationNumber.toLowerCase().includes(searchTerm));
 
-            // check region matches (skip if "any" is selected)
+            // check if auditor matches selected region (skip if "any" is selected)
             const matchesRegion = selectedRegion === "any" || !selectedRegion || 
                 (auditor.regions && auditor.regions.toLowerCase().includes(selectedRegion.toLowerCase()));
 
-            // check scopes match
+            // check if auditor matches selected scopes (using boolean values from CSV)
             const matchesScopes = (
-                (!standardChecked || (auditor.scopes && auditor.scopes.standard === "Yes")) &&
-                (!cookChillChecked || (auditor.scopes && auditor.scopes.cookChill === "Yes")) &&
-                (!heatTreatmentChecked || (auditor.scopes && auditor.scopes.heatTreatment === "Yes"))
+                (!standardChecked || (auditor.scopes && auditor.scopes.standard === true)) &&
+                (!cookChillChecked || (auditor.scopes && auditor.scopes.cookChill === true)) &&
+                (!heatTreatmentChecked || (auditor.scopes && auditor.scopes.heatTreatment === true))
             );
 
-            // return true if all match
+            // return true if auditor matches all criteria
             return matchesSearch && matchesRegion && matchesScopes;
         });
 
+        // render the filtered results
         renderAuditors(filtered);
     }
 
-    // function to shuffle the order of the list
+    // function to shuffle the order of the auditor list (randomize display order)
     function shuffleArray(array) {
         for (let i = array.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [array[i], array[j]] = [array[j], array[i]];
+            [array[i], array[j]] = [array[j], array[i]]; // swap elements
         }
     }
 
-    // add event listeners
+    // add event listeners for all interactive elements
     document.querySelector(".search-button").addEventListener("click", filterAuditors);
     document.querySelector(".auditor-search-input").addEventListener("keyup", (e) => {
-        // search on enter key
+        // trigger search when enter key is pressed
         if (e.key === "Enter") filterAuditors();
     });
     document.getElementById("region-select").addEventListener("change", filterAuditors);
@@ -159,15 +209,15 @@ document.addEventListener("DOMContentLoaded", function () {
     document.getElementById("cookChill").addEventListener("change", filterAuditors);
     document.getElementById("heatTreatment").addEventListener("change", filterAuditors);
 
-    // create cards for each auditor
+    // create cards for each auditor and display them on the page
     function renderAuditors(auditorList) {
         const resultsContainer = document.getElementById("results-container");
         resultsContainer.innerHTML = "";
 
-        // randomize the order of auditor list
+        // randomize the order of auditor list for fair display
         shuffleArray(auditorList);
 
-        // show no results message
+        // show no results message if no auditors match criteria
         if (auditorList.length === 0) {
             const noResults = document.createElement("div");
             noResults.className = "no-results";
@@ -177,21 +227,21 @@ document.addEventListener("DOMContentLoaded", function () {
         }
 
         auditorList.forEach((auditor) => {
-            // create card
+            // create card container for each auditor
             const card = document.createElement("div");
             card.className = "result-card";
 
-            // add header
+            // add header section with name, registration, and expiry
             const header = document.createElement("div");
             header.className = "result-header";
 
             const name = document.createElement("h3");
-            // use n/a if no name
+            // use n/a if no name available
             name.textContent = auditor.name || "N/A";
 
             const regNumber = document.createElement("span");
             regNumber.className = "registration-number";
-            // use n/a if no registration
+            // use n/a if no registration number
             regNumber.textContent = auditor.registrationNumber || "N/A";
 
             const expiryDate = document.createElement("span");
@@ -203,20 +253,20 @@ document.addEventListener("DOMContentLoaded", function () {
             header.appendChild(regNumber);
             header.appendChild(expiryDate);
 
-            // add content section
+            // add content section with company and contact details
             const content = document.createElement("div");
             content.className = "result-content";
 
             const grid = document.createElement("div");
             grid.className = "result-grid";
 
-            // add company info
+            // add company information section
             const companyInfo = document.createElement("div");
             companyInfo.className = "company-info";
 
             const companyName = document.createElement("p");
             companyName.className = "info-label";
-            // use n/a if no company
+            // use n/a if no company name
             companyName.textContent = auditor.company || "N/A";
 
             const contactInfo = document.createElement("div");
@@ -224,9 +274,10 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const phone = document.createElement("div");
             if (Array.isArray(auditor.phone)) {
+                // handle multiple phone numbers
                 phone.innerHTML = "Phone:<br>" + auditor.phone.map(p => `<div>${p}</div>`).join("");
             } else {
-                // use n/a if no phone
+                // use n/a if no phone number
                 phone.innerHTML = `Phone:<br><div>${auditor.phone || "N/A"}</div>`;
             }
 
@@ -249,7 +300,7 @@ document.addEventListener("DOMContentLoaded", function () {
             companyInfo.appendChild(companyName);
             companyInfo.appendChild(contactInfo);
 
-            // add scope info
+            // add scope information section (audit capabilities)
             const scopeInfo = document.createElement("div");
             scopeInfo.className = "scope-info";
 
@@ -261,14 +312,16 @@ document.addEventListener("DOMContentLoaded", function () {
             scopeDetails.className = "info-value";
 
             const standard = document.createElement("p");
-            // use n/a if no high risk scope
-            standard.textContent = `High Risk: ${auditor.scopes?.standard || "N/A"}`;
+            // convert boolean to yes/no display for high risk standard
+            standard.textContent = `High Risk: ${auditor.scopes?.standard === true ? "Yes" : "No"}`;
 
             const cookChill = document.createElement("p");
-            cookChill.textContent = `Cook Chill: ${auditor.scopes?.cookChill || "N/A"}`;
+            // convert boolean to yes/no display for cook chill scope
+            cookChill.textContent = `Cook Chill: ${auditor.scopes?.cookChill === true ? "Yes" : "No"}`;
 
             const heatTreatment = document.createElement("p");
-            heatTreatment.textContent = `Heat Treatment: ${auditor.scopes?.heatTreatment || "N/A"}`;
+            // convert boolean to yes/no display for heat treatment scope
+            heatTreatment.textContent = `Heat Treatment: ${auditor.scopes?.heatTreatment === true ? "Yes" : "No"}`;
 
             scopeDetails.appendChild(standard);
             scopeDetails.appendChild(cookChill);
@@ -277,7 +330,7 @@ document.addEventListener("DOMContentLoaded", function () {
             scopeInfo.appendChild(scopeTitle);
             scopeInfo.appendChild(scopeDetails);
 
-            // add region info
+            // add region information section (service areas)
             const regionInfo = document.createElement("div");
             regionInfo.className = "region-info";
 
@@ -287,19 +340,19 @@ document.addEventListener("DOMContentLoaded", function () {
 
             const regionDetails = document.createElement("div");
             regionDetails.className = "info-value";
-            // use n/a if no regions
+            // use n/a if no regions available
             const fullText = auditor.regions || "N/A";
-            // checks if text is over 210 chars long
+            // check if text is over 210 chars long (truncate if too long)
             const isLong = fullText.length > 210; 
-            // span element for region text
+            // span element for truncated region text
             const preview = document.createElement("span");
             preview.textContent = isLong ? fullText.slice(0, 200) + "..." : fullText; 
-            // extended span element to show full text
+            // extended span element to show full text when expanded
             const full = document.createElement("span");
             full.textContent = fullText;
             full.style.display = "none";
 
-            // clickable element for span 
+            // clickable element to toggle between preview and full text
             const toggle = document.createElement("a");
             toggle.href = "#";
             toggle.textContent = "Show more";
@@ -307,6 +360,7 @@ document.addEventListener("DOMContentLoaded", function () {
             toggle.style.display = isLong ? "inline" : "none";
             toggle.style.marginLeft = "8px";
 
+            // handle click to expand/collapse region text
             toggle.addEventListener("click", function (e) {
                 e.preventDefault();
                 const expanded = full.style.display === "inline";
@@ -322,75 +376,108 @@ document.addEventListener("DOMContentLoaded", function () {
             regionInfo.appendChild(regionTitle);
             regionInfo.appendChild(regionDetails);
 
-            // add sections to grid
+            // add all sections to the grid layout
             grid.appendChild(companyInfo);
             grid.appendChild(scopeInfo);
             grid.appendChild(regionInfo);
 
-            // add grid to content
+            // add grid to content section
             content.appendChild(grid);
 
-            // add everything to card
+            // add header and content to the card
             card.appendChild(header);
             card.appendChild(content);
 
-            // add card to page
+            // add completed card to the results container
             resultsContainer.appendChild(card);
         });
     }
 
-    // load and show data
-    fetch("Approved_Auditors.csv")
-        .then(res => res.text())
-        .then(data => {
-            const parsed = parseAuditorCSV(data);
+    // load and show data from hosted Excel file
+    console.log("Starting to fetch Excel file from hosted URL...");
+    // Excel file hosted on your personal website (andersonbee.com)
+    // Using CORS proxy temporarily for testing
+    const excelUrl = "https://api.allorigins.win/raw?url=" + encodeURIComponent("https://andersonbee.com/approved-auditor%20(4).xlsx");
+    
+    // simple direct fetch - no CORS issues since it's a hosted file
+    function loadExcelData() {
+        console.log("Fetching Excel file from:", excelUrl);
+        
+        fetch(excelUrl)
+            .then(res => {
+                console.log("Response received:", res.status, res.statusText);
+                if (!res.ok) {
+                    throw new Error(`HTTP error! status: ${res.status}`);
+                }
+                return res.arrayBuffer();
+            })
+            .then(arrayBuffer => {
+                console.log("Excel data loaded successfully, size:", arrayBuffer.byteLength, "bytes");
+                processExcelData(arrayBuffer);
+            })
+            .catch(err => {
+                console.error("Error loading Excel file:", err);
+                alert(`Unable to load auditor data from Excel file. Error: ${err.message}\n\nPlease check that the Excel file URL is correct and accessible.`);
+            });
+    }
+    
+    // convert excel serial date to readable format
+    function convertExcelDate(excelSerial) {
+        if (!excelSerial || isNaN(excelSerial)) return "N/A";
+        
+        // excel serial date starts from jan 1, 1900 (but excel has a bug where it thinks 1900 is a leap year)
+        // so we need to adjust by subtracting 2 days
+        const excelEpoch = new Date(1900, 0, 1);
+        const date = new Date(excelEpoch.getTime() + (excelSerial - 2) * 24 * 60 * 60 * 1000);
+        
+        // format as dd-mmm-yy (e.g., "26-Jun-26")
+        const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+        const day = date.getDate().toString().padStart(2, '0');
+        const month = months[date.getMonth()];
+        const year = date.getFullYear().toString().slice(-2);
+        
+        return `${day}-${month}-${year}`;
+    }
 
-            // format the data
+    function processExcelData(arrayBuffer) {
+        try {
+            const parsed = parseAuditorExcel(arrayBuffer);
+            console.log("Parsed data:", parsed.length, "rows");
+
+            // format the excel data into auditor objects with proper field mapping
             allAuditors = parsed
-                .filter(row => row["Organisation"])
+                .filter(row => row["Auditor Name"] && row["Auditor Name"].trim() !== "") // filter by auditor name instead of organisation
                 .map((row, index) => ({
                     id: index + 1,
-                    name: row["Auditor Name"],
-                    registrationNumber: row["Approval No."],
-                    company: row["Organisation"],
-                    phone: row["Phone No."].match(/\d{2,4}(?: \d{3,4}){2}/g), // phone numbers regex
-                    email: row["Email"],
+                    name: row["Auditor Name"] || "N/A",
+                    registrationNumber: row["Approval No."] || "N/A",
+                    company: row["Organisation"] || "N/A",
+                    phone: (row["Phone No."] || "").replace(/\n/g, " ").trim() || "N/A", // clean up phone numbers with line breaks
+                    email: row["Email"] || "N/A",
                     scopes: {
-                        standard: row["Standard (high risk)"],
-                        cookChill: row["Cook Chill"],
-                        heatTreatment: row["Heat Treatment"]
+                        // normalize scope values to handle case inconsistencies (yes/no to boolean)
+                        standard: (row["Standard (high risk)"] || "").toLowerCase() === "yes",
+                        cookChill: (row["Cook Chill"] || "").toLowerCase() === "yes",
+                        heatTreatment: (row["Heat Treatment"] || "").toLowerCase() === "yes"
                     },
-                    // handle expiry date from csv column with trailing space
-                    expiryDate: row["Approval Expiry "] || row["Approval Expiry"],
-                    regions: row["Local government areas of service"]
+                    // convert excel serial date to readable format
+                    expiryDate: convertExcelDate(row["Approval Expiry "] || row["Approval Expiry"]),
+                    regions: row["Local government areas of service"] || "N/A"
                 }));
 
-            // setup and show initial data
+            // setup region dropdown and display initial data
             const uniqueRegions = getUniqueRegions(allAuditors);
             populateRegionDropdown(uniqueRegions);
 
-            // debugging checking for missing data and dupes //////////////////////////// DELETE LATER
-            console.log("Total parsed rows:", parsed);
-            console.log("Total mapped auditors:", allAuditors.length);
-            console.log("Missing phones for:", parsed.filter(r => !r["Phone No."]).map(r => r["Auditor Name"]));
-            const duplicates = allAuditors.reduce((acc, a) => {
-                acc[a.company] = (acc[a.company] || 0) + 1;
-                return acc;
-            }, {});
-            console.log("Auditor count per organisation:", duplicates);
-            console.log("Auditor Names:", allAuditors.map(a => a.name));
-            //////////////////////////////////////////////
-
+            // render all auditors initially
             renderAuditors(allAuditors);
-        })
-        .catch(err => {
-            // log errors
-            console.error("Error loading CSV:", err);
-        });
+        } catch (parseErr) {
+            console.error("Error parsing Excel data:", parseErr);
+            alert("Error parsing the Excel file. The file format may have changed. Please contact support.");
+        }
+    }
+    
+    // start loading data
+    loadExcelData();
 
-    // todo: add these features later
-    // 1. search functionality - filter cards by name or registration number
-    // 2. region filter - dropdown to filter by region
-    // 3. scope filters - checkboxes to filter by scope types
-    // 4. make cards appear in random order
 });

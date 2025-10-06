@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Excel Test</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</head>
+<body>
+    <h1>Excel Loading Test</h1>
+    <div id="output"></div>
+    
+    <script>
+        console.log("Testing Excel loading...");
+        
+        // try direct fetch first
+        fetch("https://www.health.qld.gov.au/_data/assets/excel_doc/0016/440044/approved-auditor.xlsx")
+            .then(res => {
+                console.log("Direct fetch response:", res.status, res.statusText);
+                if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                return res.arrayBuffer();
+            })
+            .then(data => {
+                console.log("Excel data loaded directly, size:", data.byteLength);
+                const workbook = XLSX.read(data, { type: 'array' });
+                const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                console.log("Parsed data:", jsonData.length, "rows");
+                document.getElementById('output').innerHTML = `<p>Success! Loaded ${jsonData.length} rows directly from Excel file.</p>`;
+            })
+            .catch(err => {
+                console.error("Direct fetch failed:", err);
+                document.getElementById('output').innerHTML = `<p>Direct fetch failed: ${err.message}</p>`;
+            });
+    </script>
+</body>
+</html>
