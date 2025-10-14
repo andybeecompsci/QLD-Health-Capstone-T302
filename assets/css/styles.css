@@ -135,6 +135,72 @@
     text-decoration: underline;
 }
 
+/* align results with qgov website */
+
+/* Base font setup (matches QGOV content area) */
+#results-container,
+.result-card,
+.result-content {
+  font-family: 'Lato', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+  color: #222; /* same as QGOV body text */
+  font-weight: 400;
+  line-height: 1.6;
+  letter-spacing: 0.2px;
+}
+
+/* Auditor name (equivalent to h3 on QGOV pages) */
+.result-card h3,
+.result-card .auditor-name {
+  font-size: 1.25rem;          /* ~20px */
+  font-weight: 700;            /* bold heading style */
+  color: #111;
+  margin-bottom: 0.3rem;
+  line-height: 1.4;
+}
+
+/* Registration number badge */
+.result-card .auditor-id {
+  font-size: 0.85rem;
+  font-weight: 600;
+  background-color: #e7f3f8;   /* light QGOV-blue tint */
+  color: #005f92;              /* QGOV link blue */
+  border-radius: 4px;
+  padding: 0.2rem 0.6rem;
+}
+
+/* Section headings inside cards (Source, Scopes, Regions) */
+.result-card strong,
+.result-card .section-label {
+  font-weight: 700;
+  color: #333;
+}
+
+/* Body text and email links */
+.result-card p,
+.result-card li,
+.result-card span {
+  font-size: 0.9375rem;        /* ~15px, matches QGOV content body */
+  color: #222;
+}
+
+.result-card a {
+  color: #005f92;
+  text-decoration: underline;
+}
+
+.result-card a:hover,
+.result-card a:focus {
+  color: #00436b;
+  text-decoration: none;
+}
+
+/* Card layout consistency */
+.result-card {
+  border-radius: 6px;
+  border: 1px solid #e0e0e0;
+  background: #fff;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.05);
+}
 
 
 
