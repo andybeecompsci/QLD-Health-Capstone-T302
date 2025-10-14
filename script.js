@@ -479,6 +479,77 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Error parsing the Excel file. The file format may have changed. Please contact support.");
         }
     }
+    // Helper to toggle a target element by selector
+    function toggleElement(selector, forceShow = null) {
+        const el = document.querySelector(selector);
+        if (!el) return;
+
+        const isCollapsed = !el.classList.contains("show");
+
+        if (forceShow === true || (forceShow === null && isCollapsed)) {
+        el.classList.add("show");
+        el.classList.remove("collapse");
+        el.style.display = "block";
+        } else if (forceShow === false || !isCollapsed) {
+        el.classList.remove("show");
+        el.classList.add("collapse");
+        el.style.display = "none";
+        }
+    }
+
+    // Mobile menu toggle ("Menu" button)
+    const menuBtn = document.querySelector("#qg-show-menu");
+    if (menuBtn) {
+        menuBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        toggleElement("#qg-site-nav");
+        toggleElement("#qg-portal-links");
+        });
+    }
+
+    // Search bar toggle ("Search" button)
+    const searchBtn = document.querySelector("#qg-show-search");
+    if (searchBtn) {
+        searchBtn.addEventListener("click", (e) => {
+        e.preventDefault();
+        toggleElement("#qg-global-search-form");
+        });
+    }
+
+    // Portal links dropdown toggle
+    const portalDropdown = document.querySelector("#qgPortalLinkBusiness");
+    if (portalDropdown) {
+        portalDropdown.addEventListener("click", (e) => {
+        e.preventDefault();
+        const dropdownMenu = portalDropdown.parentElement.querySelector(".dropdown-menu");
+        if (dropdownMenu) {
+            const visible = dropdownMenu.classList.toggle("show");
+            dropdownMenu.style.display = visible ? "block" : "none";
+        }
+        });
+    }
+
+    const govDropdown = document.querySelector("#qgPortalLinkGovernment");
+    if (govDropdown) {
+        govDropdown.addEventListener("click", (e) => {
+        e.preventDefault();
+        const dropdownMenu = govDropdown.parentElement.querySelector(".dropdown-menu");
+        if (dropdownMenu) {
+            const visible = dropdownMenu.classList.toggle("show");
+            dropdownMenu.style.display = visible ? "block" : "none";
+        }
+        });
+    }
+
+    // Initialize collapsed elements so they show properly
+    ["#qg-site-nav", "#qg-portal-links", "#qg-global-search-form"].forEach(sel => {
+        const el = document.querySelector(sel);
+        if (el && el.classList.contains("collapse")) {
+        el.classList.remove("collapse");
+        el.classList.add("show");
+        el.style.display = "block";
+        }
+    });
     
     // start loading data
     loadExcelData();
