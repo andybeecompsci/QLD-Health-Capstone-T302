@@ -11,5 +11,4 @@ npm install -g live-server
 
 live-server
 
-4.
-done bozo
+4. navigate to url given
