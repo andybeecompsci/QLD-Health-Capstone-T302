@@ -62,10 +62,7 @@
         <style type="text/css">.grecaptcha-badge { visibility: hidden; }</style>
 
         <!-- QGOV core styles (local copies) -->
-        <link href="assets/css/jquery.fancybox.min.css" rel="stylesheet">
         <link href="assets/css/qg-main.css" rel="stylesheet">
-        <link href="assets/css/qg-main-theme.css" rel="stylesheet">
-        <link href="assets/css/qg-components.css" rel="stylesheet">
 
         <!-- Bootstrap CSS -->
         <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.6.0/dist/css/bootstrap.min.css">
@@ -88,12 +85,8 @@
     <!-- End Google Tag Manager -->
     
     
-    <!-- Skip to main content link
-    <div class="visually-hidden-focusable">
-        <a href="#content">Skip to main content</a>
-    </div> -->
+    <!-- Skip to main content link -->
     <section id="qg-access" aria-labelledby="landmark-label">
-        <!--<h2 id="landmark-label" tabindex="-1">Skip links and keyboard navigation</h2>-->
         <nav id="landmark-label" aria-label="Skip links and keyboard navigation">
             <ul>
                 <li><a id="skip-to-content" href="#qg-primary-content" tabindex="1">Skip to content</a></li>
@@ -403,16 +396,15 @@
                                     </div>
                                 </div>
                             </div>
-
-                            <div class="auditor-search">
-                                <div class="input-group">
-                                    <input type="text" class="form-control auditor-search-input" 
-                                        placeholder="Search by Auditor Name or Registration Number">
-                                    <div class="input-group-append">
-                                        <button class="btn btn-primary search-button" type="button">Search</button>
-                                    </div>
-                                </div>
+                            <form class="auditor-search p-3" id="auditorSearchForm">
+                            <div class="qld-search-input">
+                                <input id="auditor-search" name="query" class="form-control auditor-search-input" type="text" autocomplete="off" aria-label="Search auditor list" placeholder="Search by Auditor Name or Approval Number"/>
+                                <button class="btn btn-primary search-button" type="button" id="search-button">
+                                <span class="btn-icon"></span>
+                                <span class="btn-label">Search</span>
+                                </button>
                             </div>
+                            </form>
                         </div>
 
                         <!-- Results section -->

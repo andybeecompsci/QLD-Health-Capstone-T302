@@ -1,0 +1,5 @@
+{
+  "dependencies": {
+    "@qld-gov-au/qgds-bootstrap5": "^2.0.7"
+  }
+}

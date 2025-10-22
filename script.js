@@ -365,7 +365,7 @@ document.addEventListener("DOMContentLoaded", function () {
             const isLong = fullText.length > 210; 
             // span element for truncated region text
             const preview = document.createElement("span");
-            preview.textContent = isLong ? fullText.slice(0, 200) + "..." : fullText; 
+            preview.textContent = isLong ? fullText.slice(0, 60) + "..." : fullText; 
             // extended span element to show full text when expanded
             const full = document.createElement("span");
             full.textContent = fullText;
@@ -559,6 +559,9 @@ document.addEventListener("DOMContentLoaded", function () {
             alert("Error parsing the Excel file. The file format may have changed. Please contact support.");
         }
     }
+
+    // ------------------ QG COMPONENT VISIBILITY FIXES ------------------
+
     // Helper to toggle a target element by selector
     function toggleElement(selector, forceShow = null) {
         const el = document.querySelector(selector);
@@ -630,6 +633,23 @@ document.addEventListener("DOMContentLoaded", function () {
         el.style.display = "block";
         }
     });
+
+    // // Make header search button visible locally
+    // document.addEventListener("DOMContentLoaded", () => {
+    // const headerSearchBtn = document.querySelector("#feature-search-submit");
+    // if (headerSearchBtn) {
+    //     // Un-hide (QGOV hides it using clipping)
+    //     headerSearchBtn.style.position = "static";
+    //     headerSearchBtn.style.clip = "auto";
+    //     headerSearchBtn.style.height = "auto";
+    //     headerSearchBtn.style.width = "auto";
+    //     headerSearchBtn.style.overflow = "visible";
+    //     headerSearchBtn.style.whiteSpace = "normal";
+    //     headerSearchBtn.style.display = "inline-block";
+    // }
+    // });
+
+    // ------------------ END QG COMPONENT VISIBILITY FIXES ------------------
     
     // start loading data
     loadExcelData();
