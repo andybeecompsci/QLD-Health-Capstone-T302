@@ -159,10 +159,14 @@ document.addEventListener("DOMContentLoaded", function () {
     function filterAuditors() {
         const searchTerm = document.querySelector(".auditor-search-input").value.toLowerCase();
         const selectedRegion = document.getElementById("region-select").value;
+        const selectedAuditorType = document.getElementById("auditor-source-select").value;
         const standardChecked = document.getElementById("standard").checked;
         const cookChillChecked = document.getElementById("cookChill").checked;
         const heatTreatmentChecked = document.getElementById("heatTreatment").checked;
 
+        // debug logging
+        console.log("Filtering with:", { selectedAuditorType, selectedRegion, searchTerm });
+        console.log("Total auditors before filter:", allAuditors.length);
 
         const filtered = allAuditors.filter(auditor => {
             // check if auditor matches search term (name or registration number)
@@ -174,6 +178,10 @@ document.addEventListener("DOMContentLoaded", function () {
             const matchesRegion = selectedRegion === "any" || !selectedRegion || 
                 (auditor.regions && auditor.regions.toLowerCase().includes(selectedRegion.toLowerCase()));
 
+            // check if auditor matches selected auditor type (skip if "any" is selected)
+            const matchesAuditorType = selectedAuditorType === "any" || !selectedAuditorType || 
+                (auditor.auditorType && auditor.auditorType === selectedAuditorType);
+
             // check if auditor matches selected scopes (using boolean values from CSV)
             const matchesScopes = (
                 (!standardChecked || (auditor.scopes && auditor.scopes.standard === true)) &&
@@ -181,9 +189,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 (!heatTreatmentChecked || (auditor.scopes && auditor.scopes.heatTreatment === true))
             );
 
+            // debug logging for each auditor
+            if (selectedAuditorType !== "any" && selectedAuditorType) {
+                console.log(`Auditor: ${auditor.name}, Type: ${auditor.auditorType}, Matches: ${matchesAuditorType}`);
+            }
+
             // return true if auditor matches all criteria
-            return matchesSearch && matchesRegion && matchesScopes;
+            return matchesSearch && matchesRegion && matchesAuditorType && matchesScopes;
         });
+
+        console.log("Filtered results:", filtered.length);
 
         // render the filtered results
         renderAuditors(filtered);
@@ -204,6 +219,7 @@ document.addEventListener("DOMContentLoaded", function () {
         if (e.key === "Enter") filterAuditors();
     });
     document.getElementById("region-select").addEventListener("change", filterAuditors);
+    document.getElementById("auditor-source-select").addEventListener("change", filterAuditors);
     document.getElementById("standard").addEventListener("change", filterAuditors);
     document.getElementById("cookChill").addEventListener("change", filterAuditors);
     document.getElementById("heatTreatment").addEventListener("change", filterAuditors);
@@ -214,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
         resultsContainer.innerHTML = "";
 
         // randomize the order of auditor list for fair display
-        shuffleArray(auditorList);
+        // shuffleArray(auditorList); // commented out for testing - shows auditors in proper order
 
         // show no results message if no auditors match criteria
         if (auditorList.length === 0) {
@@ -447,26 +463,62 @@ document.addEventListener("DOMContentLoaded", function () {
             const parsed = parseAuditorExcel(arrayBuffer);
             console.log("Parsed data:", parsed.length, "rows");
 
-            // format the excel data into auditor objects with proper field mapping
-            allAuditors = parsed
-                .filter(row => row["Auditor Name"] && row["Auditor Name"].trim() !== "") // filter by auditor name instead of organisation
-                .map((row, index) => ({
-                    id: index + 1,
-                    name: row["Auditor Name"] || "N/A",
-                    registrationNumber: row["Approval No."] || "N/A",
-                    company: row["Organisation"] || "N/A",
-                    phone: (row["Phone No."] || "").replace(/\n/g, " ").trim() || "N/A", // clean up phone numbers with line breaks
-                    email: row["Email"] || "N/A",
-                    scopes: {
-                        // normalize scope values to handle case inconsistencies (yes/no to boolean)
-                        standard: (row["Standard (high risk)"] || "").toLowerCase() === "yes",
-                        cookChill: (row["Cook Chill"] || "").toLowerCase() === "yes",
-                        heatTreatment: (row["Heat Treatment"] || "").toLowerCase() === "yes"
-                    },
-                    // convert excel serial date to readable format
-                    expiryDate: convertExcelDate(row["Approval Expiry "] || row["Approval Expiry"]),
-                    regions: row["Local government areas of service"] || "N/A"
-                }));
+            // determine auditor type based on section headers in the excel data
+            let currentAuditorType = "Approved Auditors"; // default for first section
+            
+            // first pass: identify section headers and determine auditor types
+            const processedRows = parsed.map((row, index) => {
+                const organisation = row["Organisation"] || "";
+                const auditorName = row["Auditor Name"] || "";
+                
+                // debug logging to see what we're processing
+                console.log("Processing row:", { organisation, auditorName, currentAuditorType });
+                
+                // check if this row is a section header
+                if (organisation.toLowerCase().includes("local government approved auditors")) {
+                    console.log("Found Local Government header, switching type");
+                    currentAuditorType = "Local Government Auditors";
+                    return { ...row, isHeader: true, auditorType: currentAuditorType };
+                } else if (organisation.toLowerCase().includes("queensland health approved auditors")) {
+                    console.log("Found QLD Health header, switching type");
+                    currentAuditorType = "QLD Health Approved Auditors";
+                    return { ...row, isHeader: true, auditorType: currentAuditorType };
+                } else if (organisation.toLowerCase().includes("note:")) {
+                    return { ...row, isHeader: true, auditorType: currentAuditorType };
+                }
+                
+                // regular auditor row - assign current type
+                return { ...row, isHeader: false, auditorType: currentAuditorType };
+            });
+            
+            // second pass: filter out headers and create auditor objects
+            allAuditors = processedRows
+                .filter(row => !row.isHeader && row["Auditor Name"] && row["Auditor Name"].trim() !== "")
+                .map((row, index) => {
+                    const auditor = {
+                        id: index + 1,
+                        name: row["Auditor Name"] || "N/A",
+                        registrationNumber: row["Approval No."] || "N/A",
+                        company: row["Organisation"] || "N/A",
+                        phone: (row["Phone No."] || "").replace(/\n/g, " ").trim() || "N/A", // clean up phone numbers with line breaks
+                        email: row["Email"] || "N/A",
+                        scopes: {
+                            // normalize scope values to handle case inconsistencies (yes/no to boolean)
+                            standard: (row["Standard (high risk)"] || "").toLowerCase() === "yes",
+                            cookChill: (row["Cook Chill"] || "").toLowerCase() === "yes",
+                            heatTreatment: (row["Heat Treatment"] || "").toLowerCase() === "yes"
+                        },
+                        // convert excel serial date to readable format
+                        expiryDate: convertExcelDate(row["Approval Expiry "] || row["Approval Expiry"]),
+                        regions: row["Local government areas of service"] || "N/A",
+                        // set auditor type based on which section they're in
+                        auditorType: row.auditorType
+                    };
+                    
+                    // debug logging for each auditor
+                    console.log("Created auditor:", auditor.name, "Type:", auditor.auditorType);
+                    return auditor;
+                });
 
             // setup region dropdown and display initial data
             const uniqueRegions = getUniqueRegions(allAuditors);
