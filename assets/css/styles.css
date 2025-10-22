@@ -4,6 +4,7 @@
     border-radius: 8px;
     padding: 20px;
     margin-bottom: 20px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
 }
 
 .filters {
@@ -56,6 +57,8 @@
     margin-bottom: 16px;
     overflow: hidden;
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+    line-height: 1.5;
+    max-width: 850px;
 }
 
 .result-header {
@@ -88,14 +91,27 @@
 
 .result-grid {
     display: grid;
-    grid-template-columns: 1fr;
+    grid-template-columns: 1fr 1fr 1fr; 
+    column-gap: 2rem;
+    align-items: start;
     gap: 20px;
+    min-width: 0; /* prevents grid overflow */
+    word-wrap: break-word;
+    overflow-wrap: anywhere;
+    white-space: normal;
+}
+
+/* Paragraphs and text */
+.result-grid p, div {
+    font-family: 'Lato', sans-serif;
+    font-weight: 400;
+    color: #222;
+    line-height: 1.6;
 }
 
 @media (min-width: 768px) {
     .result-grid {
         grid-template-columns: repeat(3, 1fr);
-        align-items: stretch;        
     }
 }
 
@@ -175,7 +191,7 @@
 .result-card p,
 .result-card li,
 .result-card span {
-    font-size: 0.9375rem;        /
+    font-size: 0.9375rem;        
     color: #222;
 }
 
@@ -225,7 +241,6 @@ p, li, span {
 .auditor-search {
     display: flex;
     justify-content: center;
-    padding: 1rem;
     background-color: transparent;
 }
 
@@ -241,7 +256,6 @@ p, li, span {
 .auditor-search-input {
     flex: 1;
     min-height: 3rem;
-    padding: 0 4rem 0 1rem;
     border: 1px solid #bcbcbc;          
     border-right: none;                  
     border-radius: 0.25rem 0 0 0.25rem;
@@ -299,7 +313,7 @@ p, li, span {
 @media (min-width: 768px) {
   .auditor-search-input {
     min-height: 3.25rem;
-    padding: 0.75rem 1rem 0.75rem 2.5rem;
+    align-items: stretch;
   }
 
   .search-button {
@@ -353,4 +367,21 @@ p, li, span {
 .btn-global-primary:hover:focus:active:disabled,.btn-global-primary:hover:focus:active:not(:disabled),.btn-global-primary:hover:focus:not(:active):disabled,.btn-global-primary:hover:focus:not(:active):not(:disabled),.btn-global-primary:hover:not(:focus):active:disabled,.btn-global-primary:hover:not(:focus):active:not(:disabled),.btn-global-primary:hover:not(:focus):not(:active):disabled,.btn-global-primary:hover:not(:focus):not(:active):not(:disabled),.btn-global-primary:not(:hover):focus:active:disabled,.btn-global-primary:not(:hover):focus:active:not(:disabled),.btn-global-primary:not(:hover):focus:not(:active):disabled,.btn-global-primary:not(:hover):focus:not(:active):not(:disabled),.btn-global-primary:not(:hover):not(:focus):active:disabled,.btn-global-primary:not(:hover):not(:focus):active:not(:disabled),.btn-global-primary:not(:hover):not(:focus):not(:active):disabled,.btn-global-primary:not(:hover):not(:focus):not(:active):not(:disabled) {
     color: #fff
 }
+
+/* Scopes checkboxes inside search section */
+.search-section .form-check-label {
+  font-weight: 400;           
+  color: #1b1b1b;             
+  font-size: 1rem;            
+  line-height: 1.5;
+}
+
+/* adjust checkbox spacing */
+.search-section .form-check {
+  margin-bottom: 0.4rem;
+}
+
+
+
+
 
