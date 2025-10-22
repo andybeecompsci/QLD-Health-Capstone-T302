@@ -491,8 +491,36 @@ document.addEventListener("DOMContentLoaded", function () {
                 return { ...row, isHeader: false, auditorType: currentAuditorType };
             });
             
+            // handle merged cells for organization and phone number inheritance
+            let currentOrganization = "";
+            let lastPhoneForOrganization = {};
+            
+            // process rows to handle merged cells
+            const rowsWithInheritedData = processedRows.map(row => {
+                if (row.isHeader) return row;
+                
+                // handle organization inheritance (existing logic)
+                if (row["Organisation"] && row["Organisation"].trim() !== "") {
+                    currentOrganization = row["Organisation"];
+                } else if (currentOrganization) {
+                    row["Organisation"] = currentOrganization;
+                }
+                
+                // handle phone number inheritance (new logic)
+                const phoneNumber = (row["Phone No."] || "").replace(/\n/g, " ").trim();
+                if (phoneNumber && phoneNumber !== "") {
+                    // store phone number for this organization
+                    lastPhoneForOrganization[currentOrganization] = phoneNumber;
+                } else if (currentOrganization && lastPhoneForOrganization[currentOrganization]) {
+                    // inherit phone number from organization
+                    row["Phone No."] = lastPhoneForOrganization[currentOrganization];
+                }
+                
+                return row;
+            });
+            
             // second pass: filter out headers and create auditor objects
-            allAuditors = processedRows
+            allAuditors = rowsWithInheritedData
                 .filter(row => !row.isHeader && row["Auditor Name"] && row["Auditor Name"].trim() !== "")
                 .map((row, index) => {
                     const auditor = {
