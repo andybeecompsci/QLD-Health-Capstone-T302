@@ -230,7 +230,7 @@ document.addEventListener("DOMContentLoaded", function () {
         resultsContainer.innerHTML = "";
 
         // randomize the order of auditor list for fair display
-        // shuffleArray(auditorList); // commented out for testing - shows auditors in proper order
+        shuffleArray(auditorList);
 
         // show no results message if no auditors match criteria
         if (auditorList.length === 0) {
