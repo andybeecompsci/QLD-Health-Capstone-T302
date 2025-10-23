@@ -491,9 +491,10 @@ document.addEventListener("DOMContentLoaded", function () {
                 return { ...row, isHeader: false, auditorType: currentAuditorType };
             });
             
-            // handle merged cells for organization and phone number inheritance
+            // handle merged cells for organization, phone number, and regions inheritance
             let currentOrganization = "";
             let lastPhoneForOrganization = {};
+            let lastRegionsForOrganization = {};
             
             // process rows to handle merged cells
             const rowsWithInheritedData = processedRows.map(row => {
@@ -506,7 +507,7 @@ document.addEventListener("DOMContentLoaded", function () {
                     row["Organisation"] = currentOrganization;
                 }
                 
-                // handle phone number inheritance (new logic)
+                // handle phone number inheritance (existing logic)
                 const phoneNumber = (row["Phone No."] || "").replace(/\n/g, " ").trim();
                 if (phoneNumber && phoneNumber !== "") {
                     // store phone number for this organization
@@ -514,6 +515,16 @@ document.addEventListener("DOMContentLoaded", function () {
                 } else if (currentOrganization && lastPhoneForOrganization[currentOrganization]) {
                     // inherit phone number from organization
                     row["Phone No."] = lastPhoneForOrganization[currentOrganization];
+                }
+                
+                // handle regions inheritance (new logic)
+                const regions = (row["Local government areas of service"] || "").trim();
+                if (regions && regions !== "") {
+                    // store regions for this organization
+                    lastRegionsForOrganization[currentOrganization] = regions;
+                } else if (currentOrganization && lastRegionsForOrganization[currentOrganization]) {
+                    // inherit regions from organization
+                    row["Local government areas of service"] = lastRegionsForOrganization[currentOrganization];
                 }
                 
                 return row;
